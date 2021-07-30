@@ -38,7 +38,7 @@ namespace OsuPracticeTools
         private static readonly SoundPlayer ScriptFinish = new("Resources/scriptFinish.wav");
         private static readonly SoundPlayer ScriptError = new("Resources/scriptError.wav");
         internal static Keys[] StatKeys = { Keys.X, Keys.C, Keys.V };
-        internal static Keys RateKey = Keys.D;
+        internal static Keys RateKey = Keys.Z;
         internal static List<Keys> ResetGlobalKey = new() {Keys.Z, Keys.X};
 
         private static void Main()
@@ -210,6 +210,8 @@ namespace OsuPracticeTools
             GlobalKeyboardHook.HookedDownKeys.Add(new List<Keys> { RateKey, Keys.OemMinus });
             GlobalKeyboardHook.HookedDownKeys.Add(new List<Keys> { RateKey, Keys.Oemplus });
             GlobalKeyboardHook.HookedDownKeys.Add(new List<Keys> { RateKey, Keys.Delete });
+            GlobalKeyboardHook.HookedDownKeys.Add(new List<Keys> { RateKey | Keys.Shift, Keys.OemMinus | Keys.Shift });
+            GlobalKeyboardHook.HookedDownKeys.Add(new List<Keys> { RateKey | Keys.Shift, Keys.Oemplus | Keys.Shift });
         }
 
         private static void LoadHotkeys()

@@ -84,20 +84,18 @@ namespace OsuPracticeTools
 
 							if (!PressedKeys.Contains(key))
 								PressedKeys.Add(key);
-
 							var keysWithModifiers = PressedKeys.ConvertAll(k => k | modifiers);
 							if (KeyDown != null && HookedDownKeys.Any(keysWithModifiers.SequenceEqual))
 							{
 								KeyDown(null, keysWithModifiers);
 							}
 
-							if (HookedDownKeys.Any(k => k[0] == PressedKeys[0]))
+							if (PressedKeys.Count > 0 && HookedDownKeys.Any(k => k[0] == PressedKeys[0]))
 								handled = true;
 						}
 					}
 
 					_enabled = true;
-
 				}
 				else if (wParam is WM_KEYUP or WM_SYSKEYUP)
 				{
@@ -119,12 +117,11 @@ namespace OsuPracticeTools
 								KeyUp(null, keysWithModifiers);
 							}
 
-							if (HookedDownKeys.Any(k => k[0] == PressedKeys[0]))
+							if (PressedKeys.Count > 0 && HookedDownKeys.Any(k => k[0] == PressedKeys[0]))
 								handled = true;
 						}
 
 						PressedKeys.Remove(key);
-
 					}
 					else
 					{

@@ -1,5 +1,4 @@
 ﻿using OsuLightBeatmapParser;
-using OsuLightBeatmapParser.Enums;
 using OsuPracticeTools.Forms;
 using OsuPracticeTools.Objects;
 using System;
@@ -12,12 +11,17 @@ namespace OsuPracticeTools.Helpers
 {
     public static class ScriptHelper
     {
+        private static string _prevBeatmapFile;
         public static int SetGlobalOptions(List<Keys> keys, string beatmapFile, Keys[] statKeys, Keys rateKey, List<Keys> resetKey)
         {
             if (keys.Count != 2) return -1;
+            var rateAmount = 0.1;
             var amount = 0.5f;
             if (keys[1].HasFlag(Keys.Shift))
+            {
+                rateAmount = 0.01;
                 amount = 0.1f;
+            }
 
             if (keys.SequenceEqual(resetKey))
             {
@@ -27,35 +31,47 @@ namespace OsuPracticeTools.Helpers
 
             keys = keys.ConvertAll(k => k & Keys.KeyCode);
 
+            if (_prevBeatmapFile != beatmapFile)
+                Script.ParsedBeatmap = null;
+            if (Script.ParsedBeatmap is null)
+                Script.ParsedBeatmap = BeatmapDecoder.Decode(beatmapFile);
+
+            _prevBeatmapFile = beatmapFile;
+
             if (keys[0] == rateKey)
             {
                 switch(keys[1])
                 {
                     case Keys.OemMinus:
-                    Script.GlobalOptions.SpeedRate = Math.Max(Script.GlobalOptions.SpeedRate - 0.1, 0.5);
-                    break;
+                        if (rateAmount == 0.1)
+                            Script.GlobalOptions.SpeedRate = Math.Ceiling(Math.Round(Script.GlobalOptions.SpeedRate * 10, 1)) / 10;
+                        Script.GlobalOptions.SpeedRate = Math.Max(Script.GlobalOptions.SpeedRate - rateAmount, 0.5);
+                        break;
                     case Keys.Oemplus:
-                    Script.GlobalOptions.SpeedRate = Math.Min(Script.GlobalOptions.SpeedRate + 0.1, 2);
-                    break;
+                        if (rateAmount == 0.1)
+                            Script.GlobalOptions.SpeedRate = Math.Floor(Math.Round(Script.GlobalOptions.SpeedRate * 10, 1)) / 10;
+                        Script.GlobalOptions.SpeedRate = Math.Min(Script.GlobalOptions.SpeedRate + rateAmount, 2);
+                        break;
                     case Keys.Delete:
-                    Script.GlobalOptions.SpeedRate = 1;
-                    break;
+                        Script.GlobalOptions.SpeedRate = 1;
+                        break;
                 }
-                MessageForm.ShowMessage($"Rate: {Script.GlobalOptions.SpeedRate:0.0##}");
+                var bpm = Script.ParsedBeatmap.General.MainBPM * Script.GlobalOptions.SpeedRate;
+                MessageForm.ShowMessage($"Rate: {Script.GlobalOptions.SpeedRate:0.0#} ({Convert.ToInt32(bpm)}bpm)");
             }
             else if (keys[0] == statKeys[0])
             {
-                Script.GlobalOptions.CS ??= BeatmapDecoder.DecodeRead(beatmapFile, new[] { FileSection.Difficulty }).Difficulty.CircleSize;
+                Script.GlobalOptions.CS ??= Script.ParsedBeatmap.Difficulty.CircleSize;
                 switch (keys[1])
                 {
                     case Keys.OemMinus:
                         if (amount == 0.5f)
-                            Script.GlobalOptions.CS = (float)Math.Round(Math.Ceiling((float)Script.GlobalOptions.CS * 2) / 2, 1);
+                            Script.GlobalOptions.CS = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.CS * 2, 1)) / 2;
                         Script.GlobalOptions.CS = Math.Max((float)Script.GlobalOptions.CS - amount, 0);
                         break;
                     case Keys.Oemplus:
                         if (amount == 0.5f)
-                            Script.GlobalOptions.CS = (float)Math.Round(Math.Floor((float)Script.GlobalOptions.CS * 2) / 2, 1);
+                            Script.GlobalOptions.CS = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.CS * 2, 1)) / 2;
                         Script.GlobalOptions.CS = Math.Min((float)Script.GlobalOptions.CS + amount, 10);
                         break;
                     case Keys.Delete:
@@ -63,21 +79,21 @@ namespace OsuPracticeTools.Helpers
                         break;
                 }
                 Script.GlobalOptions.DifficultyModified = true;
-                MessageForm.ShowMessage($"CS: {Script.GlobalOptions.CS:0.0##}");
+                MessageForm.ShowMessage($"CS: {Script.GlobalOptions.CS ?? Script.ParsedBeatmap.Difficulty.CircleSize:0.0#}");
             }
             else if (keys[0] == statKeys[1])
             {
-                Script.GlobalOptions.AR ??= BeatmapDecoder.DecodeRead(beatmapFile, new[] { FileSection.Difficulty }).Difficulty.ApproachRate;
+                Script.GlobalOptions.AR ??= Script.ParsedBeatmap.Difficulty.ApproachRate;
                 switch (keys[1])
                 {
                     case Keys.OemMinus:
                         if (amount == 0.5f)
-                            Script.GlobalOptions.AR = (float)Math.Round(Math.Ceiling((float)Script.GlobalOptions.AR * 2) / 2, 1);
+                            Script.GlobalOptions.AR = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.AR * 2, 1)) / 2;
                         Script.GlobalOptions.AR = Math.Max((float)Script.GlobalOptions.AR - amount, 0);
                         break;
                     case Keys.Oemplus:
                         if (amount == 0.5f)
-                            Script.GlobalOptions.AR = (float)Math.Round(Math.Floor((float)Script.GlobalOptions.AR * 2) / 2, 1);
+                            Script.GlobalOptions.AR = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.AR * 2, 1)) / 2;
                         Script.GlobalOptions.AR = Math.Min((float)Script.GlobalOptions.AR + amount, 10);
                         break;
                     case Keys.Delete:
@@ -85,21 +101,21 @@ namespace OsuPracticeTools.Helpers
                         break;
                 }
                 Script.GlobalOptions.DifficultyModified = true;
-                MessageForm.ShowMessage($"AR: {Script.GlobalOptions.AR:0.0##}");
+                MessageForm.ShowMessage($"AR: {Script.GlobalOptions.AR ?? Script.ParsedBeatmap.Difficulty.ApproachRate:0.0#}");
             }
             else if (keys[0] == statKeys[2])
             {
-                Script.GlobalOptions.OD ??= BeatmapDecoder.DecodeRead(beatmapFile, new[] { FileSection.Difficulty }).Difficulty.OverallDifficulty;
+                Script.GlobalOptions.OD ??= Script.ParsedBeatmap.Difficulty.OverallDifficulty;
                 switch (keys[1])
                 {
                     case Keys.OemMinus:
                         if (amount == 0.5f)
-                            Script.GlobalOptions.OD = (float)Math.Round(Math.Ceiling((float)Script.GlobalOptions.OD * 2) / 2, 1);
+                            Script.GlobalOptions.OD = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.OD * 2, 1)) / 2;
                         Script.GlobalOptions.OD = Math.Max((float)Script.GlobalOptions.OD - amount, 0);
                         break;
                     case Keys.Oemplus:
                         if (amount == 0.5f)
-                            Script.GlobalOptions.OD = (float)Math.Round(Math.Floor((float)Script.GlobalOptions.OD * 2) / 2, 1);
+                            Script.GlobalOptions.OD = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.OD * 2, 1)) / 2;
                         Script.GlobalOptions.OD = Math.Min((float)Script.GlobalOptions.OD + amount, 10);
                         break;
                     case Keys.Delete:
@@ -107,7 +123,7 @@ namespace OsuPracticeTools.Helpers
                         break;
                 }
                 Script.GlobalOptions.DifficultyModified = true;
-                MessageForm.ShowMessage($"OD: {Script.GlobalOptions.OD:0.0##}");
+                MessageForm.ShowMessage($"OD: {Script.GlobalOptions.OD ?? Script.ParsedBeatmap.Difficulty.OverallDifficulty:0.0#}");
             }
             else
                 return -1;
@@ -135,32 +151,35 @@ namespace OsuPracticeTools.Helpers
             {
                 if (string.IsNullOrWhiteSpace(line) || line.StartsWith("//")) continue;
                 if (line.StartsWith(">>")) break;
-                if (line[0] == '~')
-                {
-                    var parts = line[1..].Split(':', StringSplitOptions.TrimEntries);
-                    switch (parts[0].ToLower())
-                    {
-                        case "cs":
-                            Program.StatKeys[0] = KeysHelper.Parse(parts[1]);
-                            break;
-                        case "ar":
-                            Program.StatKeys[1] = KeysHelper.Parse(parts[1]);
-                            break;
-                        case "od":
-                            Program.StatKeys[2] = KeysHelper.Parse(parts[1]);
-                            break;
-                        case "rate":
-                            Program.RateKey = KeysHelper.Parse(parts[1]);
-                            break;
-                        case "reset":
-                            Program.ResetGlobalKey = parts[1].Split('/', StringSplitOptions.TrimEntries)
-                                .Select(KeysHelper.Parse).ToList();
-                            break;
-                    }
-                }
                 try
                 {
-                    var parts = line.Split(':', StringSplitOptions.TrimEntries);
+                    string[] parts;
+
+                    if (line[0] == '~')
+                    {
+                        parts = line[1..].Split(':', StringSplitOptions.TrimEntries);
+                        switch (parts[0].ToLower())
+                        {
+                            case "cs":
+                                Program.StatKeys[0] = KeysHelper.Parse(parts[1]);
+                                break;
+                            case "ar":
+                                Program.StatKeys[1] = KeysHelper.Parse(parts[1]);
+                                break;
+                            case "od":
+                                Program.StatKeys[2] = KeysHelper.Parse(parts[1]);
+                                break;
+                            case "rate":
+                                Program.RateKey = KeysHelper.Parse(parts[1]);
+                                break;
+                            case "reset":
+                                Program.ResetGlobalKey = parts[1].Split('/', StringSplitOptions.TrimEntries)
+                                    .Select(KeysHelper.Parse).ToList();
+                                break;
+                        }
+                    }
+
+                    parts = line.Split(':', StringSplitOptions.TrimEntries);
 
                     var keyParts = parts[0].Split('+', StringSplitOptions.TrimEntries);
 
