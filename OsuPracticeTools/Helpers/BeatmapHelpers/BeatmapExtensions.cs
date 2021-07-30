@@ -15,16 +15,16 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
     internal static class BeatmapExtensions
     {
         // check if file exists in beatmap folder, then save to temp folder
-        public static void Save(this Beatmap beatmap, string tempFolder, string folder, bool overwrite, bool rename = false)
+        public static void Save(this Beatmap beatmap, string tempFolder, string beatmapFolder, bool overwrite, bool rename = false)
         {
-            var path = Path.Combine(folder, beatmap.FileName);
+            var path = Path.Combine(beatmapFolder, beatmap.FileName);
             try
             {
                 if (!File.Exists(path) || overwrite)
                     beatmap.Save(tempFolder);
                 else if (rename)
                 {
-                    beatmap.Rename(folder);
+                    beatmap.Rename(beatmapFolder);
                     beatmap.Save(tempFolder);
                 }
             }

@@ -176,7 +176,7 @@ namespace OsuPracticeTools.Objects
                 {
                     case "i":
                         _options.ScriptDiffsType = ScriptDiffsType.Interval;
-                        _options.Interval = string.IsNullOrEmpty(param) ? 5 : float.Parse(param);
+                        _options.Interval = string.IsNullOrEmpty(param) ? 20 : int.Parse(param);
                         break;
                     case "order":
                         if (param == "time")
@@ -391,7 +391,7 @@ namespace OsuPracticeTools.Objects
 
                     var diffs = PracticeDiffExtensions.GetDiffsFromTimes(times, newBeatmap);
 
-                    diffs.CreateDiffs(_options, beatmapFolder);
+                    diffs.CreateDiffs(_options, GlobalConstants.BEATMAP_TEMP, beatmapFolder);
                     return (int)ScriptType.CreateDiffs;
 
                 case ScriptType.CreateMap:

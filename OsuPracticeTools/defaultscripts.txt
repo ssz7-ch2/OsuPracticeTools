@@ -22,7 +22,7 @@ s + A: adddiff
 s + Q: enddiff
 s + S: creatediffs -spinner
 s + W: creatediffs -f "{v} {sc}-{ec}x"
-s + I: creatediffs -i 10 -spinner
+s + I: creatediffs -i 20 -spinner
 
 // hotkeys for changing global options
 ~cs: X

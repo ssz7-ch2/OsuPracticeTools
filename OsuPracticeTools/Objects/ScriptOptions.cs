@@ -5,7 +5,7 @@ namespace OsuPracticeTools.Objects
     public class ScriptOptions
     {
         public ScriptDiffsType ScriptDiffsType { get; set; } = ScriptDiffsType.Current;
-        public float Interval { get; set; } = 5; // in seconds
+        public int Interval { get; set; } = 20;
         public double SpeedRate { get; set; } = 1;
         public bool Pitch { get; set; } = false;
         public double? BPM { get; set; } = null;

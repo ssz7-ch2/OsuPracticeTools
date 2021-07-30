@@ -375,7 +375,7 @@ namespace OsuPracticeTools.Objects
             Combo = Math.Clamp(_startCombo, (int)ComboType, 200);
         }
 
-        public void Save(string folderPath)
+        public void Save(string tempFolder, string beatmapFolder)
         {
             CloneBeatmap();
 
@@ -385,7 +385,7 @@ namespace OsuPracticeTools.Objects
 
             _beatmap.HitObjects.InsertRange(0, combo);
 
-            _beatmap.Save(folderPath, folderPath, false, true);
+            _beatmap.Save(tempFolder, beatmapFolder, false, true);
         }
     }
 }

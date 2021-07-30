@@ -37,7 +37,7 @@ namespace OsuPracticeTools.Helpers
             }
         }
 
-        public static void CreateDiffs(this List<PracticeDiff> diffs, ScriptOptions options, string folderPath)
+        public static void CreateDiffs(this List<PracticeDiff> diffs, ScriptOptions options, string tempFolder, string beatmapFolder)
         {
             foreach (var practiceDiff in diffs)
             {
@@ -47,7 +47,7 @@ namespace OsuPracticeTools.Helpers
 
             diffs.ReadjustEndTimes(options.PracticeDiffOptions);
             diffs.RenameDiffs(options.PracticeDiffOptions, options.SpeedRate);
-            diffs.ForEach(p => p.Save(folderPath));
+            diffs.ForEach(p => p.Save(tempFolder, beatmapFolder));
         }
 
         public static List<PracticeDiff> GetDiffsFromTimes(List<int[]> times, Beatmap beatmap)
@@ -65,22 +65,14 @@ namespace OsuPracticeTools.Helpers
             return diffs;
         }
 
-        public static List<int[]> GetTimesFromInterval(float interval, Beatmap beatmap)
+        public static List<int[]> GetTimesFromInterval(int interval, Beatmap beatmap)
         {
             var times = new List<int[]>();
-            interval *= 1000;
-
-            var lastObject = beatmap.HitObjects.Last();
             var endTime = beatmap.HitObjects.Last().EndTime;
 
-            double currentTime = beatmap.HitObjects.First().StartTime;
-            var t = (int)currentTime;
-            while (t <= lastObject.StartTime)
-            {
-                times.Add(new []{t, endTime + 1});
-                currentTime += interval;
-                t = (int)currentTime;
-            }
+            for (int i = 0; i < beatmap.HitObjects.Count; i += interval)
+                times.Add(new[] { beatmap.HitObjects[i].StartTime, endTime + 1 });
+            
 
             return times;
         }
