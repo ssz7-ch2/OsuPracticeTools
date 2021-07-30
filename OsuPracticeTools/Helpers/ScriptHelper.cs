@@ -52,7 +52,7 @@ namespace OsuPracticeTools.Helpers
                             Script.GlobalOptions.SpeedRate = Math.Floor(Math.Round(Script.GlobalOptions.SpeedRate * 10, 1)) / 10;
                         Script.GlobalOptions.SpeedRate = Math.Min(Script.GlobalOptions.SpeedRate + rateAmount, 2);
                         break;
-                    case Keys.Delete:
+                    case Keys.Back:
                         Script.GlobalOptions.SpeedRate = 1;
                         break;
                 }
@@ -74,7 +74,7 @@ namespace OsuPracticeTools.Helpers
                             Script.GlobalOptions.CS = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.CS * 2, 1)) / 2;
                         Script.GlobalOptions.CS = Math.Min((float)Script.GlobalOptions.CS + amount, 10);
                         break;
-                    case Keys.Delete:
+                    case Keys.Back:
                         Script.GlobalOptions.CS = null;
                         break;
                 }
@@ -96,7 +96,7 @@ namespace OsuPracticeTools.Helpers
                             Script.GlobalOptions.AR = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.AR * 2, 1)) / 2;
                         Script.GlobalOptions.AR = Math.Min((float)Script.GlobalOptions.AR + amount, 10);
                         break;
-                    case Keys.Delete:
+                    case Keys.Back:
                         Script.GlobalOptions.AR = null;
                         break;
                 }
@@ -118,12 +118,34 @@ namespace OsuPracticeTools.Helpers
                             Script.GlobalOptions.OD = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.OD * 2, 1)) / 2;
                         Script.GlobalOptions.OD = Math.Min((float)Script.GlobalOptions.OD + amount, 10);
                         break;
-                    case Keys.Delete:
+                    case Keys.Back:
                         Script.GlobalOptions.OD = null;
                         break;
                 }
                 Script.GlobalOptions.DifficultyModified = true;
                 MessageForm.ShowMessage($"OD: {Script.GlobalOptions.OD ?? Script.ParsedBeatmap.Difficulty.OverallDifficulty:0.0#}");
+            }
+            else if (keys[0] == statKeys[3])
+            {
+                Script.GlobalOptions.HP ??= Script.ParsedBeatmap.Difficulty.HPDrainRate;
+                switch (keys[1])
+                {
+                    case Keys.OemMinus:
+                        if (amount == 0.5f)
+                            Script.GlobalOptions.HP = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.HP * 2, 1)) / 2;
+                        Script.GlobalOptions.HP = Math.Max((float)Script.GlobalOptions.HP - amount, 0);
+                        break;
+                    case Keys.Oemplus:
+                        if (amount == 0.5f)
+                            Script.GlobalOptions.HP = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.HP * 2, 1)) / 2;
+                        Script.GlobalOptions.HP = Math.Min((float)Script.GlobalOptions.HP + amount, 10);
+                        break;
+                    case Keys.Back:
+                        Script.GlobalOptions.HP = null;
+                        break;
+                }
+                Script.GlobalOptions.DifficultyModified = true;
+                MessageForm.ShowMessage($"HP: {Script.GlobalOptions.HP ?? Script.ParsedBeatmap.Difficulty.HPDrainRate:0.0#}");
             }
             else
                 return -1;
@@ -138,6 +160,7 @@ namespace OsuPracticeTools.Helpers
             optionsA.CS = optionsB.CS ?? optionsA.CS;
             optionsA.AR = optionsB.AR ?? optionsA.AR;
             optionsA.OD = optionsB.OD ?? optionsA.OD;
+            optionsA.HP = optionsB.HP ?? optionsA.HP;
             optionsA.DifficultyModified = optionsA.DifficultyModified || optionsB.DifficultyModified;
             /*var scriptOptions = typeof(ScriptOptions);
             foreach (var property in scriptOptions.GetProperties())
@@ -168,6 +191,9 @@ namespace OsuPracticeTools.Helpers
                                 break;
                             case "od":
                                 Program.StatKeys[2] = KeysHelper.Parse(parts[1]);
+                                break;
+                            case "hp":
+                                Program.StatKeys[3] = KeysHelper.Parse(parts[1]);
                                 break;
                             case "rate":
                                 Program.RateKey = KeysHelper.Parse(parts[1]);

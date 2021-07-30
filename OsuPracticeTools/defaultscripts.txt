@@ -25,8 +25,9 @@ s + W: creatediffs -f "{v} {sc}-{ec}x"
 s + I: creatediffs -i 20 -spinner
 
 // hotkeys for changing global options
-~cs: X
-~ar: C
-~od: V
-~rate: Z
+~cs: Z
+~ar: X
+~od: C
+~hp: V
+~rate: R
 ~reset: Z/X
