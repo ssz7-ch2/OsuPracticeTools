@@ -274,7 +274,7 @@ namespace OsuPracticeTools
                     if (scriptType < 0)
                         messages.Add($"Failed to run script {script.ScriptString}");
 
-                    if (scriptType is (int)ScriptType.AddDiff)
+                    if (scriptType is (int)ScriptType.AddDiff or (int)ScriptType.CreateDiffs)
                         _sameMapDuration = 0;
 
                     if (scriptType is (int)ScriptType.AddMap or (int)ScriptType.CreateMaps)
