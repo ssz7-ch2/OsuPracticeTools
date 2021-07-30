@@ -76,9 +76,6 @@
     <Content Include="defaultscripts.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="README.md">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="Resources\scriptError.wav">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
