@@ -11,6 +11,11 @@
       *.xml
     </AllowedReferenceRelatedFileExtensions>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="submodules\**" />
+    <EmbeddedResource Remove="submodules\**" />
+    <None Remove="submodules\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="NAudio" Version="2.0.1" />
@@ -108,6 +113,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="submodules\" />
+    <ProjectReference Include="submodules\OsuLightBeatmapParser\OsuLightBeatmapParser\OsuLightBeatmapParser.csproj" />
   </ItemGroup>
 </Project>

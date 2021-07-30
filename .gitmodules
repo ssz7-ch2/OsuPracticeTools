@@ -1,0 +1,3 @@
+[submodule "OsuPracticeTools/submodules/OsuLightBeatmapParser"]
+	path = OsuPracticeTools/submodules/OsuLightBeatmapParser
+	url = https://github.com/ssz7-ch2/OsuLightBeatmapParser
