@@ -24,9 +24,9 @@ namespace OsuPracticeTools
 		private SolidBrush _background;
 		private Font _font;
 		private readonly System.Drawing.Font _fontWidth = new("Segoe UI", 19.5f);
-		private string _message;
+		private string _message = "";
 
-		public DirectXOverlay(int left, int top, int width, int height, string message)
+		public DirectXOverlay()
 		{
 			var gfx = new Graphics()
 			{
@@ -34,13 +34,11 @@ namespace OsuPracticeTools
 				TextAntiAliasing = true
 			};
 
-			_message = message;
-
-			_window = new GraphicsWindow(left, top, width, height, gfx)
+			_window = new GraphicsWindow(gfx)
 			{
 				FPS = 30,
 				IsTopmost = true,
-				IsVisible = true
+				IsVisible = false
 			};
 
 			_window.DestroyGraphics += _window_DestroyGraphics;
@@ -97,7 +95,7 @@ namespace OsuPracticeTools
 				_window.Hide();
 		}
 
-		public bool IsRunning => _window.IsRunning;
+		public bool IsInitialized => _window.IsInitialized;
 
 		~DirectXOverlay()
 		{
@@ -129,21 +127,8 @@ namespace OsuPracticeTools
 			var ptr = Program.OsuProcess.MainWindowHandle;
 			var osuProcessRect = new Rect();
 			GetWindowRect(ptr, ref osuProcessRect);
-			if (Overlay is null)
-			{
-				Overlay = new DirectXOverlay(osuProcessRect.Left, osuProcessRect.Top, osuProcessRect.Right - osuProcessRect.Left, osuProcessRect.Bottom - osuProcessRect.Top, message);
-			}
-
-			if (!Overlay.IsRunning)
-			{
-				Thread thread = new(Overlay.Run);
-				thread.Start();
-			}
-			else
-			{
-				Overlay.Update(osuProcessRect.Left, osuProcessRect.Top, osuProcessRect.Right - osuProcessRect.Left, osuProcessRect.Bottom - osuProcessRect.Top, message);
-				Overlay.Show();
-			}
+			Overlay.Update(osuProcessRect.Left, osuProcessRect.Top, osuProcessRect.Right - osuProcessRect.Left, osuProcessRect.Bottom - osuProcessRect.Top, message);
+			Overlay.Show();
 
 			_timer?.Dispose();
 			_timer = new Timer { Interval = 100 };
@@ -152,12 +137,25 @@ namespace OsuPracticeTools
 			_elapsedMilliseconds = 0;
 		}
 
+		public static void LoadOverlay()
+		{
+			var ptr = Program.OsuProcess.MainWindowHandle;
+			var osuProcessRect = new Rect();
+			GetWindowRect(ptr, ref osuProcessRect);
+			Overlay = new DirectXOverlay();
+			var thread = new Thread(Overlay.Run);
+			thread.Start();
+		}
+
+		public static void DisposeOverlay() => Overlay.Dispose();
+
 		private static void CloseOverlay(object sender, EventArgs e)
 		{
 			_elapsedMilliseconds += _timer.Interval;
 			if (_elapsedMilliseconds >= 1000)
 			{
 				Overlay.Hide();
+				_timer.Dispose();
 				_elapsedMilliseconds = 0;
 			}
 		}

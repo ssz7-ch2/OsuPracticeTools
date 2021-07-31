@@ -126,6 +126,7 @@ namespace OsuPracticeTools
 
             if (_gameClosedDuration >= 20 || _prevGameState != _gameRunning)
             {
+                DirectXOverlay.DisposeOverlay();
                 Logger.LogMessage("Game closed, unloading hotkeys");
                 Bass.BASS_Free();
                 GlobalKeyboardHook.Unhook();
@@ -142,6 +143,7 @@ namespace OsuPracticeTools
 
             if (_prevGameState != _gameRunning)
             {
+                DirectXOverlay.LoadOverlay();
                 Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);
                 GlobalKeyboardHook.Hook();
                 LoadHotkeys();
