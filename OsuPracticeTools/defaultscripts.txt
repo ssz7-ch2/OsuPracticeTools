@@ -30,4 +30,3 @@ s + I: creatediffs -i 20 -spinner
 ~od: C
 ~hp: V
 ~rate: R
-~reset: Z/X

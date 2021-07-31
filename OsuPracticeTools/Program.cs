@@ -39,7 +39,8 @@ namespace OsuPracticeTools
         private static readonly SoundPlayer ScriptError = new("Resources/scriptError.wav");
         internal static Keys[] StatKeys = { Keys.Z, Keys.X, Keys.C, Keys.V };
         internal static Keys RateKey = Keys.R;
-        internal static List<Keys> ResetGlobalKey = new() {Keys.Z, Keys.X};
+        internal static List<Keys> ResetGlobalKey = new() { Keys.Back | Keys.Shift };
+        internal static Process OsuProcess;
 
         private static void Main()
         {
@@ -51,6 +52,7 @@ namespace OsuPracticeTools
             }
 
             _songsFolder = Properties.Settings.Default.SongsFolder;
+            AppDomain.CurrentDomain.UnhandledException += UnhandledException;
             Application.ApplicationExit += OnExit;
 
             _osuReader = OsuMemoryReader.Instance.GetInstanceForWindowTitleHint("");
@@ -63,8 +65,15 @@ namespace OsuPracticeTools
             Application.Run(new SystemTray());
         }
 
+        private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Logger.LogError(e.ExceptionObject as Exception);
+            Application.Exit();
+        }
+
         private static void OnExit(object sender, EventArgs e)
         {
+            DirectXOverlay.Overlay?.Dispose();
             Bass.BASS_Free();
             _timer.Dispose();
             GlobalKeyboardHook.Unhook();
@@ -85,7 +94,8 @@ namespace OsuPracticeTools
             else
             {
                 _gameRunning = true;
-                GameRunning(processes, _timer.Interval);
+                OsuProcess = processes[0];
+                GameRunning(_timer.Interval);
             }
 
             _prevGameState = _gameRunning;
@@ -103,7 +113,8 @@ namespace OsuPracticeTools
             else
             {
                 _gameRunning = true;
-                GameRunning(processes, 0);
+                OsuProcess = processes[0];
+                GameRunning(0);
             }
 
             _prevGameState = _gameRunning;
@@ -125,7 +136,7 @@ namespace OsuPracticeTools
             }
         }
 
-        private static void GameRunning(Process[] processes, int timeElapsed)
+        private static void GameRunning(int timeElapsed)
         {
             _gameClosedDuration = 0;
 
@@ -136,8 +147,8 @@ namespace OsuPracticeTools
                 LoadHotkeys();
             }
 
-            if (string.IsNullOrEmpty(_songsFolder))
-                GetSongsFolder(processes);
+            if (string.IsNullOrEmpty(_songsFolder) && OsuProcess != null)
+                GetSongsFolder();
             
 
             var currentOsuFile = _osuReader.GetOsuFileName();
@@ -174,11 +185,11 @@ namespace OsuPracticeTools
             }
         }
 
-        private static void GetSongsFolder(Process[] processes)
+        private static void GetSongsFolder()
         {
             try
             {
-                var osuExePath = processes[0].MainModule.FileName;
+                var osuExePath = OsuProcess.MainModule.FileName;
                 var songsFolder = Path.Combine(Path.GetDirectoryName(osuExePath), "Songs");
                 if (Directory.Exists(songsFolder))
                 {
@@ -200,6 +211,7 @@ namespace OsuPracticeTools
 
             foreach (var statKey in StatKeys)
             {
+                GlobalKeyboardHook.HookedDownKeys.Add(new List<Keys> { statKey });
                 GlobalKeyboardHook.HookedDownKeys.Add(new List<Keys> { statKey, Keys.OemMinus });
                 GlobalKeyboardHook.HookedDownKeys.Add(new List<Keys> { statKey, Keys.Oemplus });
                 GlobalKeyboardHook.HookedDownKeys.Add(new List<Keys> { statKey, Keys.Back });
@@ -207,6 +219,7 @@ namespace OsuPracticeTools
                 GlobalKeyboardHook.HookedDownKeys.Add(new List<Keys> { statKey | Keys.Shift, Keys.Oemplus | Keys.Shift });
             }
 
+            GlobalKeyboardHook.HookedDownKeys.Add(new List<Keys> { RateKey });
             GlobalKeyboardHook.HookedDownKeys.Add(new List<Keys> { RateKey, Keys.OemMinus });
             GlobalKeyboardHook.HookedDownKeys.Add(new List<Keys> { RateKey, Keys.Oemplus });
             GlobalKeyboardHook.HookedDownKeys.Add(new List<Keys> { RateKey, Keys.Back });

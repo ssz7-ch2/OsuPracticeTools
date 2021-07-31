@@ -1,5 +1,4 @@
 ﻿using OsuLightBeatmapParser;
-using OsuPracticeTools.Forms;
 using OsuPracticeTools.Objects;
 using System;
 using System.Collections.Generic;
@@ -14,20 +13,14 @@ namespace OsuPracticeTools.Helpers
         private static string _prevBeatmapFile;
         public static int SetGlobalOptions(List<Keys> keys, string beatmapFile, Keys[] statKeys, Keys rateKey, List<Keys> resetKey)
         {
-            if (keys.Count != 2) return -1;
-            var rateAmount = 0.1;
-            var amount = 0.5f;
-            if (keys[1].HasFlag(Keys.Shift))
-            {
-                rateAmount = 0.01;
-                amount = 0.1f;
-            }
-
             if (keys.SequenceEqual(resetKey))
             {
                 Script.GlobalOptions = new ScriptOptions();
                 return 0;
             }
+
+            var rateAmount = 0.1;
+            var amount = 0.5f;
 
             keys = keys.ConvertAll(k => k & Keys.KeyCode);
 
@@ -40,112 +33,153 @@ namespace OsuPracticeTools.Helpers
 
             if (keys[0] == rateKey)
             {
-                switch(keys[1])
+
+                if (keys.Count == 2)
                 {
-                    case Keys.OemMinus:
-                        if (rateAmount == 0.1)
-                            Script.GlobalOptions.SpeedRate = Math.Ceiling(Math.Round(Script.GlobalOptions.SpeedRate * 10, 1)) / 10;
-                        Script.GlobalOptions.SpeedRate = Math.Max(Script.GlobalOptions.SpeedRate - rateAmount, 0.5);
-                        break;
-                    case Keys.Oemplus:
-                        if (rateAmount == 0.1)
-                            Script.GlobalOptions.SpeedRate = Math.Floor(Math.Round(Script.GlobalOptions.SpeedRate * 10, 1)) / 10;
-                        Script.GlobalOptions.SpeedRate = Math.Min(Script.GlobalOptions.SpeedRate + rateAmount, 2);
-                        break;
-                    case Keys.Back:
-                        Script.GlobalOptions.SpeedRate = 1;
-                        break;
+                    if (keys[1].HasFlag(Keys.Shift))
+                    {
+                        rateAmount = 0.01;
+                    }
+                    switch (keys[1])
+                    {
+                        case Keys.OemMinus:
+                            if (rateAmount == 0.1)
+                                Script.GlobalOptions.SpeedRate = Math.Ceiling(Math.Round(Script.GlobalOptions.SpeedRate * 10, 1)) / 10;
+                            Script.GlobalOptions.SpeedRate = Math.Max(Script.GlobalOptions.SpeedRate - rateAmount, 0.5);
+                            break;
+                        case Keys.Oemplus:
+                            if (rateAmount == 0.1)
+                                Script.GlobalOptions.SpeedRate = Math.Floor(Math.Round(Script.GlobalOptions.SpeedRate * 10, 1)) / 10;
+                            Script.GlobalOptions.SpeedRate = Math.Min(Script.GlobalOptions.SpeedRate + rateAmount, 2);
+                            break;
+                        case Keys.Back:
+                            Script.GlobalOptions.SpeedRate = 1;
+                            break;
+                    }
                 }
+               
                 var bpm = Script.ParsedBeatmap.General.MainBPM * Script.GlobalOptions.SpeedRate;
-                MessageForm.ShowMessage($"Rate: {Script.GlobalOptions.SpeedRate:0.0#} ({Convert.ToInt32(bpm)}bpm)");
+                DirectXOverlay.ShowMessage($"Rate: {Script.GlobalOptions.SpeedRate:0.0#} ({Convert.ToInt32(bpm)}bpm)");
             }
             else if (keys[0] == statKeys[0])
             {
-                Script.GlobalOptions.CS ??= Script.ParsedBeatmap.Difficulty.CircleSize;
-                switch (keys[1])
+                if (keys.Count == 2)
                 {
-                    case Keys.OemMinus:
-                        if (amount == 0.5f)
-                            Script.GlobalOptions.CS = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.CS * 2, 1)) / 2;
-                        Script.GlobalOptions.CS = Math.Max((float)Script.GlobalOptions.CS - amount, 0);
-                        break;
-                    case Keys.Oemplus:
-                        if (amount == 0.5f)
-                            Script.GlobalOptions.CS = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.CS * 2, 1)) / 2;
-                        Script.GlobalOptions.CS = Math.Min((float)Script.GlobalOptions.CS + amount, 10);
-                        break;
-                    case Keys.Back:
-                        Script.GlobalOptions.CS = null;
-                        break;
+                    if (keys[1].HasFlag(Keys.Shift))
+                    {
+                        amount = 0.1f;
+                    }
+                    Script.GlobalOptions.CS ??= Script.ParsedBeatmap.Difficulty.CircleSize;
+                    switch (keys[1])
+                    {
+                        case Keys.OemMinus:
+                            if (amount == 0.5f)
+                                Script.GlobalOptions.CS = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.CS * 2, 1)) / 2;
+                            Script.GlobalOptions.CS = Math.Max((float)Script.GlobalOptions.CS - amount, 0);
+                            break;
+                        case Keys.Oemplus:
+                            if (amount == 0.5f)
+                                Script.GlobalOptions.CS = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.CS * 2, 1)) / 2;
+                            Script.GlobalOptions.CS = Math.Min((float)Script.GlobalOptions.CS + amount, 10);
+                            break;
+                        case Keys.Back:
+                            Script.GlobalOptions.CS = null;
+                            break;
+                    }
+                    Script.GlobalOptions.DifficultyModified = true;
                 }
-                Script.GlobalOptions.DifficultyModified = true;
-                MessageForm.ShowMessage($"CS: {Script.GlobalOptions.CS ?? Script.ParsedBeatmap.Difficulty.CircleSize:0.0#}");
+               
+                DirectXOverlay.ShowMessage($"CS: {Script.GlobalOptions.CS ?? Script.ParsedBeatmap.Difficulty.CircleSize:0.0#}");
             }
             else if (keys[0] == statKeys[1])
             {
-                Script.GlobalOptions.AR ??= Script.ParsedBeatmap.Difficulty.ApproachRate;
-                switch (keys[1])
+                if (keys.Count == 2)
                 {
-                    case Keys.OemMinus:
-                        if (amount == 0.5f)
-                            Script.GlobalOptions.AR = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.AR * 2, 1)) / 2;
-                        Script.GlobalOptions.AR = Math.Max((float)Script.GlobalOptions.AR - amount, 0);
-                        break;
-                    case Keys.Oemplus:
-                        if (amount == 0.5f)
-                            Script.GlobalOptions.AR = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.AR * 2, 1)) / 2;
-                        Script.GlobalOptions.AR = Math.Min((float)Script.GlobalOptions.AR + amount, 10);
-                        break;
-                    case Keys.Back:
-                        Script.GlobalOptions.AR = null;
-                        break;
+                    if (keys[1].HasFlag(Keys.Shift))
+                    {
+                        amount = 0.1f;
+                    }
+                    Script.GlobalOptions.AR ??= Script.ParsedBeatmap.Difficulty.ApproachRate;
+                    switch (keys[1])
+                    {
+                        case Keys.OemMinus:
+                            if (amount == 0.5f)
+                                Script.GlobalOptions.AR = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.AR * 2, 1)) / 2;
+                            Script.GlobalOptions.AR = Math.Max((float)Script.GlobalOptions.AR - amount, 0);
+                            break;
+                        case Keys.Oemplus:
+                            if (amount == 0.5f)
+                                Script.GlobalOptions.AR = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.AR * 2, 1)) / 2;
+                            Script.GlobalOptions.AR = Math.Min((float)Script.GlobalOptions.AR + amount, 10);
+                            break;
+                        case Keys.Back:
+                            Script.GlobalOptions.AR = null;
+                            break;
+                    }
+                    Script.GlobalOptions.DifficultyModified = true;
                 }
-                Script.GlobalOptions.DifficultyModified = true;
-                MessageForm.ShowMessage($"AR: {Script.GlobalOptions.AR ?? Script.ParsedBeatmap.Difficulty.ApproachRate:0.0#}");
+              
+                DirectXOverlay.ShowMessage($"AR: {Script.GlobalOptions.AR ?? Script.ParsedBeatmap.Difficulty.ApproachRate:0.0#}");
             }
             else if (keys[0] == statKeys[2])
             {
-                Script.GlobalOptions.OD ??= Script.ParsedBeatmap.Difficulty.OverallDifficulty;
-                switch (keys[1])
+                if (keys.Count == 2)
                 {
-                    case Keys.OemMinus:
-                        if (amount == 0.5f)
-                            Script.GlobalOptions.OD = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.OD * 2, 1)) / 2;
-                        Script.GlobalOptions.OD = Math.Max((float)Script.GlobalOptions.OD - amount, 0);
-                        break;
-                    case Keys.Oemplus:
-                        if (amount == 0.5f)
-                            Script.GlobalOptions.OD = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.OD * 2, 1)) / 2;
-                        Script.GlobalOptions.OD = Math.Min((float)Script.GlobalOptions.OD + amount, 10);
-                        break;
-                    case Keys.Back:
-                        Script.GlobalOptions.OD = null;
-                        break;
+                    if (keys[1].HasFlag(Keys.Shift))
+                    {
+                        amount = 0.1f;
+                    }
+                    Script.GlobalOptions.OD ??= Script.ParsedBeatmap.Difficulty.OverallDifficulty;
+                    switch (keys[1])
+                    {
+                        case Keys.OemMinus:
+                            if (amount == 0.5f)
+                                Script.GlobalOptions.OD = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.OD * 2, 1)) / 2;
+                            Script.GlobalOptions.OD = Math.Max((float)Script.GlobalOptions.OD - amount, 0);
+                            break;
+                        case Keys.Oemplus:
+                            if (amount == 0.5f)
+                                Script.GlobalOptions.OD = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.OD * 2, 1)) / 2;
+                            Script.GlobalOptions.OD = Math.Min((float)Script.GlobalOptions.OD + amount, 10);
+                            break;
+                        case Keys.Back:
+                            Script.GlobalOptions.OD = null;
+                            break;
+                    }
+                    Script.GlobalOptions.DifficultyModified = true;
                 }
-                Script.GlobalOptions.DifficultyModified = true;
-                MessageForm.ShowMessage($"OD: {Script.GlobalOptions.OD ?? Script.ParsedBeatmap.Difficulty.OverallDifficulty:0.0#}");
+                
+                DirectXOverlay.ShowMessage($"OD: {Script.GlobalOptions.OD ?? Script.ParsedBeatmap.Difficulty.OverallDifficulty:0.0#}");
             }
             else if (keys[0] == statKeys[3])
             {
-                Script.GlobalOptions.HP ??= Script.ParsedBeatmap.Difficulty.HPDrainRate;
-                switch (keys[1])
+                if (keys.Count == 2)
                 {
-                    case Keys.OemMinus:
-                        if (amount == 0.5f)
-                            Script.GlobalOptions.HP = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.HP * 2, 1)) / 2;
-                        Script.GlobalOptions.HP = Math.Max((float)Script.GlobalOptions.HP - amount, 0);
-                        break;
-                    case Keys.Oemplus:
-                        if (amount == 0.5f)
-                            Script.GlobalOptions.HP = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.HP * 2, 1)) / 2;
-                        Script.GlobalOptions.HP = Math.Min((float)Script.GlobalOptions.HP + amount, 10);
-                        break;
-                    case Keys.Back:
-                        Script.GlobalOptions.HP = null;
-                        break;
+                    if (keys[1].HasFlag(Keys.Shift))
+                    {
+                        amount = 0.1f;
+                    }
+                    Script.GlobalOptions.HP ??= Script.ParsedBeatmap.Difficulty.HPDrainRate;
+                    switch (keys[1])
+                    {
+                        case Keys.OemMinus:
+                            if (amount == 0.5f)
+                                Script.GlobalOptions.HP = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.HP * 2, 1)) / 2;
+                            Script.GlobalOptions.HP = Math.Max((float)Script.GlobalOptions.HP - amount, 0);
+                            break;
+                        case Keys.Oemplus:
+                            if (amount == 0.5f)
+                                Script.GlobalOptions.HP = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.HP * 2, 1)) / 2;
+                            Script.GlobalOptions.HP = Math.Min((float)Script.GlobalOptions.HP + amount, 10);
+                            break;
+                        case Keys.Back:
+                            Script.GlobalOptions.HP = null;
+                            break;
+                    }
+                    Script.GlobalOptions.DifficultyModified = true;
                 }
-                Script.GlobalOptions.DifficultyModified = true;
-                MessageForm.ShowMessage($"HP: {Script.GlobalOptions.HP ?? Script.ParsedBeatmap.Difficulty.HPDrainRate:0.0#}");
+                
+                DirectXOverlay.ShowMessage($"HP: {Script.GlobalOptions.HP ?? Script.ParsedBeatmap.Difficulty.HPDrainRate:0.0#}");
             }
             else
                 return -1;
