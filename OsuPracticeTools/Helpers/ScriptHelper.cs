@@ -1,5 +1,6 @@
 ﻿using OsuLightBeatmapParser;
 using OsuPracticeTools.Forms;
+using OsuPracticeTools.Helpers.BeatmapHelpers;
 using OsuPracticeTools.Objects;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,9 @@ namespace OsuPracticeTools.Helpers
 
             var rateAmount = 0.1;
             var amount = 0.5f;
+            bool changeAmount = false;
+            if (keys[0].HasFlag(Keys.Shift))
+                changeAmount = true;
 
             keys = keys.ConvertAll(k => k & Keys.KeyCode);
 
@@ -37,20 +41,19 @@ namespace OsuPracticeTools.Helpers
 
                 if (keys.Count == 2)
                 {
-                    if (keys[1].HasFlag(Keys.Shift))
-                    {
+                    if (changeAmount)
                         rateAmount = 0.01;
-                    }
+                    
                     switch (keys[1])
                     {
                         case Keys.OemMinus:
                             if (rateAmount == 0.1)
-                                Script.GlobalOptions.SpeedRate = Math.Ceiling(Math.Round(Script.GlobalOptions.SpeedRate * 10, 1)) / 10;
+                                Script.GlobalOptions.SpeedRate = CeilToNearest(Script.GlobalOptions.SpeedRate, 0.1, 1);
                             Script.GlobalOptions.SpeedRate = Math.Max(Script.GlobalOptions.SpeedRate - rateAmount, 0.5);
                             break;
                         case Keys.Oemplus:
                             if (rateAmount == 0.1)
-                                Script.GlobalOptions.SpeedRate = Math.Floor(Math.Round(Script.GlobalOptions.SpeedRate * 10, 1)) / 10;
+                                Script.GlobalOptions.SpeedRate = FloorToNearest(Script.GlobalOptions.SpeedRate, 0.1, 1);
                             Script.GlobalOptions.SpeedRate = Math.Min(Script.GlobalOptions.SpeedRate + rateAmount, 2);
                             break;
                         case Keys.Back:
@@ -60,27 +63,24 @@ namespace OsuPracticeTools.Helpers
                 }
                
                 var bpm = Script.ParsedBeatmap.General.MainBPM * Script.GlobalOptions.SpeedRate;
-                MessageForm.ShowMessage($"Rate: {Script.GlobalOptions.SpeedRate:0.0#} ({Convert.ToInt32(bpm)}bpm)");
+                MessageForm.ShowMessage($"Rate: {Script.GlobalOptions.SpeedRate:0.0#}x ({Convert.ToInt32(bpm)}bpm)");
             }
             else if (keys[0] == statKeys[0])
             {
                 if (keys.Count == 2)
                 {
-                    if (keys[1].HasFlag(Keys.Shift))
-                    {
+                    if (changeAmount)
                         amount = 0.1f;
-                    }
+                    
                     Script.GlobalOptions.CS ??= Script.ParsedBeatmap.Difficulty.CircleSize;
                     switch (keys[1])
                     {
                         case Keys.OemMinus:
-                            if (amount == 0.5f)
-                                Script.GlobalOptions.CS = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.CS * 2, 1)) / 2;
+                            Script.GlobalOptions.CS = (float)CeilToNearest((float)Script.GlobalOptions.CS, amount, 1);
                             Script.GlobalOptions.CS = Math.Max((float)Script.GlobalOptions.CS - amount, 0);
                             break;
                         case Keys.Oemplus:
-                            if (amount == 0.5f)
-                                Script.GlobalOptions.CS = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.CS * 2, 1)) / 2;
+                            Script.GlobalOptions.CS = (float)FloorToNearest((float)Script.GlobalOptions.CS, amount, 1);
                             Script.GlobalOptions.CS = Math.Min((float)Script.GlobalOptions.CS + amount, 10);
                             break;
                         case Keys.Back:
@@ -96,21 +96,18 @@ namespace OsuPracticeTools.Helpers
             {
                 if (keys.Count == 2)
                 {
-                    if (keys[1].HasFlag(Keys.Shift))
-                    {
+                    if (changeAmount)
                         amount = 0.1f;
-                    }
-                    Script.GlobalOptions.AR ??= Script.ParsedBeatmap.Difficulty.ApproachRate;
+
+                    Script.GlobalOptions.AR ??= BeatmapDifficulty.ApplyRateChangeAR(Script.ParsedBeatmap.Difficulty.ApproachRate, Script.GlobalOptions.SpeedRate);
                     switch (keys[1])
                     {
                         case Keys.OemMinus:
-                            if (amount == 0.5f)
-                                Script.GlobalOptions.AR = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.AR * 2, 1)) / 2;
+                            Script.GlobalOptions.AR = (float)CeilToNearest((float)Script.GlobalOptions.AR, amount, 1);
                             Script.GlobalOptions.AR = Math.Max((float)Script.GlobalOptions.AR - amount, 0);
                             break;
                         case Keys.Oemplus:
-                            if (amount == 0.5f)
-                                Script.GlobalOptions.AR = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.AR * 2, 1)) / 2;
+                            Script.GlobalOptions.AR = (float)FloorToNearest((float)Script.GlobalOptions.AR, amount, 1);
                             Script.GlobalOptions.AR = Math.Min((float)Script.GlobalOptions.AR + amount, 10);
                             break;
                         case Keys.Back:
@@ -120,27 +117,24 @@ namespace OsuPracticeTools.Helpers
                     Script.GlobalOptions.DifficultyModified = true;
                 }
 
-                MessageForm.ShowMessage($"AR: {Script.GlobalOptions.AR ?? Script.ParsedBeatmap.Difficulty.ApproachRate:0.0#}");
+                MessageForm.ShowMessage($"AR: {Script.GlobalOptions.AR ?? Math.Round(BeatmapDifficulty.ApplyRateChangeAR(Script.ParsedBeatmap.Difficulty.ApproachRate, Script.GlobalOptions.SpeedRate), 2, MidpointRounding.ToEven):0.0#}");
             }
             else if (keys[0] == statKeys[2])
             {
                 if (keys.Count == 2)
                 {
-                    if (keys[1].HasFlag(Keys.Shift))
-                    {
+                    if (changeAmount)
                         amount = 0.1f;
-                    }
-                    Script.GlobalOptions.OD ??= Script.ParsedBeatmap.Difficulty.OverallDifficulty;
+
+                    Script.GlobalOptions.OD ??= BeatmapDifficulty.ApplyRateChangeOD(Script.ParsedBeatmap.Difficulty.OverallDifficulty, Script.GlobalOptions.SpeedRate);
                     switch (keys[1])
                     {
                         case Keys.OemMinus:
-                            if (amount == 0.5f)
-                                Script.GlobalOptions.OD = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.OD * 2, 1)) / 2;
+                            Script.GlobalOptions.OD = (float)CeilToNearest((float)Script.GlobalOptions.OD, amount, 1);
                             Script.GlobalOptions.OD = Math.Max((float)Script.GlobalOptions.OD - amount, 0);
                             break;
                         case Keys.Oemplus:
-                            if (amount == 0.5f)
-                                Script.GlobalOptions.OD = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.OD * 2, 1)) / 2;
+                            Script.GlobalOptions.OD = (float)FloorToNearest((float)Script.GlobalOptions.OD, amount, 1);
                             Script.GlobalOptions.OD = Math.Min((float)Script.GlobalOptions.OD + amount, 10);
                             break;
                         case Keys.Back:
@@ -150,27 +144,24 @@ namespace OsuPracticeTools.Helpers
                     Script.GlobalOptions.DifficultyModified = true;
                 }
 
-                MessageForm.ShowMessage($"OD: {Script.GlobalOptions.OD ?? Script.ParsedBeatmap.Difficulty.OverallDifficulty:0.0#}");
+                MessageForm.ShowMessage($"OD: {Script.GlobalOptions.OD ?? Math.Round(BeatmapDifficulty.ApplyRateChangeOD(Script.ParsedBeatmap.Difficulty.OverallDifficulty, Script.GlobalOptions.SpeedRate), 2, MidpointRounding.ToEven):0.0#}");
             }
             else if (keys[0] == statKeys[3])
             {
                 if (keys.Count == 2)
                 {
-                    if (keys[1].HasFlag(Keys.Shift))
-                    {
+                    if (changeAmount)
                         amount = 0.1f;
-                    }
+
                     Script.GlobalOptions.HP ??= Script.ParsedBeatmap.Difficulty.HPDrainRate;
                     switch (keys[1])
                     {
                         case Keys.OemMinus:
-                            if (amount == 0.5f)
-                                Script.GlobalOptions.HP = (float)Math.Ceiling(Math.Round((float)Script.GlobalOptions.HP * 2, 1)) / 2;
+                            Script.GlobalOptions.HP = (float)CeilToNearest((float)Script.GlobalOptions.HP, amount, 1);
                             Script.GlobalOptions.HP = Math.Max((float)Script.GlobalOptions.HP - amount, 0);
                             break;
                         case Keys.Oemplus:
-                            if (amount == 0.5f)
-                                Script.GlobalOptions.HP = (float)Math.Floor(Math.Round((float)Script.GlobalOptions.HP * 2, 1)) / 2;
+                            Script.GlobalOptions.HP = (float)FloorToNearest((float)Script.GlobalOptions.HP, amount, 1);
                             Script.GlobalOptions.HP = Math.Min((float)Script.GlobalOptions.HP + amount, 10);
                             break;
                         case Keys.Back:
@@ -187,6 +178,9 @@ namespace OsuPracticeTools.Helpers
 
             return 0;
         }
+
+        private static double CeilToNearest(double input, double value, int round) => Math.Ceiling(Math.Round(input * (1 / value), round)) / (1 / value);
+        private static double FloorToNearest(double input, double value, int round) => Math.Floor(Math.Round(input * (1 / value), round)) / (1 / value);
 
         // copies script options from B to A
         public static void CopyOptions(ScriptOptions optionsA, ScriptOptions optionsB)

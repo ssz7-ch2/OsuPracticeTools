@@ -26,7 +26,6 @@ namespace OsuPracticeTools
         private static string _prevOsuFile;
         private static bool _gameRunning;
         private static Timer _timer;
-        private static double _gameClosedDuration; // in minutes
         private static double _sameMapDuration; // in minutes
         private static double _lastMapAddedDuration;
         private static bool _hotkeysLoaded;
@@ -121,9 +120,7 @@ namespace OsuPracticeTools
 
         private static void GameNotRunning(int timeElapsed)
         {
-            _gameClosedDuration += timeElapsed / 60000d;
-
-            if (_gameClosedDuration >= 20 || _prevGameState != _gameRunning)
+            if (_prevGameState != _gameRunning)
             {
                 Logger.LogMessage("Game closed, unloading hotkeys");
                 Bass.BASS_Free();
@@ -137,8 +134,6 @@ namespace OsuPracticeTools
 
         private static void GameRunning(int timeElapsed)
         {
-            _gameClosedDuration = 0;
-
             if (_prevGameState != _gameRunning)
             {
                 Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);

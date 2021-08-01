@@ -2,10 +2,8 @@
 {
     public static class BeatmapDifficulty
     {
-        public static float OverallDifficultyToMs(float difficulty) => DifficultyRange(difficulty, 79.5f, 49.5f, 19.5f);
-        public static float ApproachRateToMs(float difficulty) => DifficultyRange(difficulty, 1800, 1200, 450);
-        public static float MsToOverallDifficulty(float ms) => DifficultyRangeReverse(ms, 79.5f, 49.5f, 19.5f);
-        public static float MsToApproachRate(float ms) => DifficultyRangeReverse(ms, 1800, 1200, 450);
+        public static float ApplyRateChangeOD(float difficulty, double rate) => ApplyRateChange(difficulty, rate, 79.5f, 49.5f, 19.5f);
+        public static float ApplyRateChangeAR(float difficulty, double rate) => ApplyRateChange(difficulty, rate, 1800, 1200, 450);
         public static float DifficultyRange(float difficulty, float min, float mid, float max)
         {
             if (difficulty > 5)
@@ -24,5 +22,6 @@
 
             return 5;
         }
+        public static float ApplyRateChange(float difficulty, double rate, float min, float mid, float max) => DifficultyRangeReverse((float)(DifficultyRange(difficulty, min, mid, max) / rate), min, mid, max);
     }
 }

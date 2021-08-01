@@ -145,8 +145,8 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
             beatmap.Editor.Bookmarks = beatmap.Editor.Bookmarks?.Select(b => Convert.ToInt32(b / rate) + adjustTiming).ToArray();
 
             beatmap.ModifyDifficulty(
-                ar: BeatmapDifficulty.MsToApproachRate(BeatmapDifficulty.ApproachRateToMs(beatmap.Difficulty.ApproachRate) / (float)rate),
-                od: BeatmapDifficulty.MsToOverallDifficulty(BeatmapDifficulty.OverallDifficultyToMs(beatmap.Difficulty.OverallDifficulty) / (float)rate));
+                ar: BeatmapDifficulty.ApplyRateChangeAR(beatmap.Difficulty.ApproachRate, rate),
+                od: BeatmapDifficulty.ApplyRateChangeOD(beatmap.Difficulty.OverallDifficulty, rate));
 
             beatmap.Events.VideoStartTime = (int)(beatmap.Events.VideoStartTime / rate) + adjustTiming;
             foreach (var b in beatmap.Events.Breaks)

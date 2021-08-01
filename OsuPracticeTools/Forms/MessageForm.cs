@@ -17,6 +17,8 @@ namespace OsuPracticeTools.Forms
 
         public MessageForm()
         {
+            Cursor.Hide();
+            ShowInTaskbar = false;
             FormBorderStyle = FormBorderStyle.None;
             TopMost = true;
             BackColor = Color.Black;
@@ -43,7 +45,7 @@ namespace OsuPracticeTools.Forms
         private static void CloseForm(object sender, EventArgs e)
         {
             _elapsedMilliseconds += _timer.Interval;
-            if (_elapsedMilliseconds >= 1000)
+            if (_elapsedMilliseconds >= 1500)
             {
                 MForm.Hide();
                 _isOpen = false;
@@ -66,7 +68,8 @@ namespace OsuPracticeTools.Forms
                 MForm.Show();
                 _isOpen = true;
 
-                SetForegroundWindow(MForm.Handle);
+                //SetForegroundWindow(MForm.Handle);
+                SwitchToThisWindow(MForm.Handle, true);
 
                 _timer?.Dispose();
                 _timer = new Timer { Interval = 100 };
@@ -83,5 +86,16 @@ namespace OsuPracticeTools.Forms
         static extern void SwitchToThisWindow(IntPtr hWnd, bool fAltTab);
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
+
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                var Params = base.CreateParams;
+                Params.ExStyle |= 0x80;
+
+                return Params;
+            }
+        }
     }
 }
