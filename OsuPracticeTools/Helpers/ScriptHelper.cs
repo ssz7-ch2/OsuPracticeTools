@@ -1,4 +1,5 @@
 ﻿using OsuLightBeatmapParser;
+using OsuPracticeTools.Forms;
 using OsuPracticeTools.Objects;
 using System;
 using System.Collections.Generic;
@@ -59,7 +60,7 @@ namespace OsuPracticeTools.Helpers
                 }
                
                 var bpm = Script.ParsedBeatmap.General.MainBPM * Script.GlobalOptions.SpeedRate;
-                DirectXOverlay.ShowMessage($"Rate: {Script.GlobalOptions.SpeedRate:0.0#} ({Convert.ToInt32(bpm)}bpm)");
+                MessageForm.ShowMessage($"Rate: {Script.GlobalOptions.SpeedRate:0.0#} ({Convert.ToInt32(bpm)}bpm)");
             }
             else if (keys[0] == statKeys[0])
             {
@@ -88,8 +89,8 @@ namespace OsuPracticeTools.Helpers
                     }
                     Script.GlobalOptions.DifficultyModified = true;
                 }
-               
-                DirectXOverlay.ShowMessage($"CS: {Script.GlobalOptions.CS ?? Script.ParsedBeatmap.Difficulty.CircleSize:0.0#}");
+
+                MessageForm.ShowMessage($"CS: {Script.GlobalOptions.CS ?? Script.ParsedBeatmap.Difficulty.CircleSize:0.0#}");
             }
             else if (keys[0] == statKeys[1])
             {
@@ -118,8 +119,8 @@ namespace OsuPracticeTools.Helpers
                     }
                     Script.GlobalOptions.DifficultyModified = true;
                 }
-              
-                DirectXOverlay.ShowMessage($"AR: {Script.GlobalOptions.AR ?? Script.ParsedBeatmap.Difficulty.ApproachRate:0.0#}");
+
+                MessageForm.ShowMessage($"AR: {Script.GlobalOptions.AR ?? Script.ParsedBeatmap.Difficulty.ApproachRate:0.0#}");
             }
             else if (keys[0] == statKeys[2])
             {
@@ -148,8 +149,8 @@ namespace OsuPracticeTools.Helpers
                     }
                     Script.GlobalOptions.DifficultyModified = true;
                 }
-                
-                DirectXOverlay.ShowMessage($"OD: {Script.GlobalOptions.OD ?? Script.ParsedBeatmap.Difficulty.OverallDifficulty:0.0#}");
+
+                MessageForm.ShowMessage($"OD: {Script.GlobalOptions.OD ?? Script.ParsedBeatmap.Difficulty.OverallDifficulty:0.0#}");
             }
             else if (keys[0] == statKeys[3])
             {
@@ -179,7 +180,7 @@ namespace OsuPracticeTools.Helpers
                     Script.GlobalOptions.DifficultyModified = true;
                 }
                 
-                DirectXOverlay.ShowMessage($"HP: {Script.GlobalOptions.HP ?? Script.ParsedBeatmap.Difficulty.HPDrainRate:0.0#}");
+                MessageForm.ShowMessage($"HP: {Script.GlobalOptions.HP ?? Script.ParsedBeatmap.Difficulty.HPDrainRate:0.0#}");
             }
             else
                 return -1;
