@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -17,7 +16,6 @@ namespace OsuPracticeTools.Forms
 
         public MessageForm()
         {
-            Cursor.Hide();
             ShowInTaskbar = false;
             FormBorderStyle = FormBorderStyle.None;
             TopMost = true;
@@ -35,11 +33,6 @@ namespace OsuPracticeTools.Forms
             };
             Controls.Add(_messageLabel);
             Height = _messageLabel.Height;
-            Shown += MessageForm_Shown;
-        }
-
-        private void MessageForm_Shown(object sender, EventArgs e)
-        {
         }
 
         private static void CloseForm(object sender, EventArgs e)
@@ -49,6 +42,7 @@ namespace OsuPracticeTools.Forms
             {
                 MForm.Hide();
                 _isOpen = false;
+                Cursor.Show();
                 _elapsedMilliseconds = 0;
                 _timer.Dispose();
                 SwitchToThisWindow(_prevForegroundWindow, true);
@@ -59,17 +53,16 @@ namespace OsuPracticeTools.Forms
         {
             MForm._messageLabel.Text = message;
             MForm.Width = MForm._messageLabel.Width;
-            MForm.CenterToScreen();
+            MForm.BringToFront();
+            CenterToOsu();
 
             if (!_isOpen)
             {
                 _prevForegroundWindow = GetForegroundWindow();
+                _isOpen = true;
+                Cursor.Hide();
 
                 MForm.Show();
-                _isOpen = true;
-
-                //SetForegroundWindow(MForm.Handle);
-                SwitchToThisWindow(MForm.Handle, true);
 
                 _timer?.Dispose();
                 _timer = new Timer { Interval = 100 };
@@ -77,7 +70,27 @@ namespace OsuPracticeTools.Forms
                 _timer.Start();
             }
 
+            if (SetForegroundWindow(MForm.Handle) == 0)
+            {
+                MForm.WindowState = FormWindowState.Minimized;
+                MForm.Show();
+                MForm.WindowState = FormWindowState.Normal;
+            }
+
             _elapsedMilliseconds = 0;
+        }
+
+        private static void CenterToOsu()
+        {
+            if (IsIconic(Program.OsuProcess.MainWindowHandle))
+            {
+                MForm.CenterToScreen();
+                return;
+            }
+            var osuRect = new Rect();
+            GetWindowRect(Program.OsuProcess.MainWindowHandle, ref osuRect);
+            MForm.Top = osuRect.Top + (osuRect.Bottom - osuRect.Top - MForm.Height) / 2;
+            MForm.Left = osuRect.Left + (osuRect.Right - osuRect.Left - MForm.Width) / 2;
         }
 
         [DllImport("user32.dll")]
@@ -86,6 +99,18 @@ namespace OsuPracticeTools.Forms
         static extern void SwitchToThisWindow(IntPtr hWnd, bool fAltTab);
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool IsIconic(IntPtr hWnd);
+        [DllImport("user32.dll")]
+        public static extern bool GetWindowRect(IntPtr hwnd, ref Rect rectangle);
+        public struct Rect
+        {
+            public int Left { get; set; }
+            public int Top { get; set; }
+            public int Right { get; set; }
+            public int Bottom { get; set; }
+        }
 
         protected override CreateParams CreateParams
         {

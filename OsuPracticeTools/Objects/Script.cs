@@ -85,7 +85,7 @@ namespace OsuPracticeTools.Objects
 
             foreach (Match match in matches)
             {
-                var arg = match.Groups[1].Value;
+                var arg = match.Groups[1].Value.ToLower();
                 var param = match.Groups[2].Value;
 
                 switch (arg)

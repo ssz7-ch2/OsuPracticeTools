@@ -5,7 +5,7 @@ namespace OsuPracticeTools.Helpers
 {
     public static class Logger
     {
-        private const string FILE_PATH = "errorlogs.txt";
+        private const string FILE_PATH = "logs.txt";
 
         public static void LogError(Exception ex)
         {
