@@ -132,7 +132,11 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
         {
             var newAudioFile = $"{Path.GetFileNameWithoutExtension(beatmap.General.AudioFilename)} {rate:0.000}x.mp3";
             if (!File.Exists(Path.Combine(beatmapFolder, newAudioFile)))
+            {
+                if (Path.Combine(new DirectoryInfo(tempFolder).FullName, newAudioFile).Length > 260)
+                    newAudioFile = $"audio {rate:0.000}x.mp3";
                 AudioModifier.ChangeAudioRate(Path.Combine(beatmapFolder, beatmap.General.AudioFilename), Path.Combine(tempFolder, newAudioFile), rate, pitch);
+            }
 
             beatmap.General.AudioFilename = newAudioFile;
             beatmap.General.AudioLeadIn = (int)(beatmap.General.AudioLeadIn / rate);

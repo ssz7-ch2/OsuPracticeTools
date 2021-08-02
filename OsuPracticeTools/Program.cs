@@ -260,7 +260,7 @@ namespace OsuPracticeTools
             }
         }
 
-        private static void RunScripts(List<Keys> multiKey, string beatmapFile, string beatmapFolder)
+        private static async void RunScripts(List<Keys> multiKey, string beatmapFile, string beatmapFolder)
         {
             var currentTime = _osuReader.ReadPlayTime();
 
@@ -273,20 +273,22 @@ namespace OsuPracticeTools
                 var messages = new List<string>();
                 var scriptTypes = new List<int>();
 
-                Parallel.ForEach(KeyScriptDictionary[multiKey], script =>
-                {
-                    var scriptType = script.Run(beatmapFile, beatmapFolder, Diffs, BeatmapFiles, currentTime);
-                    scriptTypes.Add(scriptType);
+                await Task.Factory.StartNew(() => {
+                    Parallel.ForEach(KeyScriptDictionary[multiKey], script =>
+                    {
+                        var scriptType = script.Run(beatmapFile, beatmapFolder, Diffs, BeatmapFiles, currentTime);
+                        scriptTypes.Add(scriptType);
 
-                    if (scriptType < 0)
-                        messages.Add($"Failed to run script {script.ScriptString}");
+                        if (scriptType < 0)
+                            messages.Add($"Failed to run script {script.ScriptString}");
 
-                    if (scriptType is (int)ScriptType.AddDiff or (int)ScriptType.CreateDiffs)
-                        _sameMapDuration = 0;
+                        if (scriptType is (int)ScriptType.AddDiff or (int)ScriptType.CreateDiffs)
+                            _sameMapDuration = 0;
 
-                    if (scriptType is (int)ScriptType.AddMap or (int)ScriptType.CreateMaps)
-                        _lastMapAddedDuration = 0;
-                    
+                        if (scriptType is (int)ScriptType.AddMap or (int)ScriptType.CreateMaps)
+                            _lastMapAddedDuration = 0;
+
+                    });
                 });
 
                 foreach (var message in messages)
