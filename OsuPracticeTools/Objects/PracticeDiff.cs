@@ -18,7 +18,7 @@ namespace OsuPracticeTools.Objects
         private readonly Beatmap _beatmap;
         private readonly Beatmap _originalBeatmap;
         private readonly HitObject _hitObjectAtStartTime;
-        private PracticeDiffOptions _options;
+        private PracticeDiffSettings _settings;
         private int _startCombo;
         private int _endCombo;
         private int _endTime;
@@ -76,7 +76,7 @@ namespace OsuPracticeTools.Objects
         {
             const string timeFormat = @"m\:ss";
             var regex = new Regex(@"{([a-zA-Z]+)}");
-            _beatmap.Metadata.Version = regex.Replace(_options.NameFormat, m =>
+            _beatmap.Metadata.Version = regex.Replace(_settings.NameFormat, m =>
             {
                 switch (m.Groups[1].Value)
                 {
@@ -126,7 +126,7 @@ namespace OsuPracticeTools.Objects
 
         private List<HitObject> GenerateCombo()
         {
-            var comboEndTime = StartTime - _options.GapDuration;
+            var comboEndTime = StartTime - _settings.GapDuration;
 
             comboEndTime = _beatmap.TimingTickBefore(comboEndTime, 2);
 
@@ -151,7 +151,7 @@ namespace OsuPracticeTools.Objects
         {
             var position = _hitObjectAtStartTime.Position;
 
-            var sliderDuration = _options.SliderDuration;
+            var sliderDuration = _settings.SliderDuration;
 
             var startTime = _beatmap.TimingTickBefore(endTime - sliderDuration, 1);
             sliderDuration = endTime - startTime;
@@ -365,10 +365,10 @@ namespace OsuPracticeTools.Objects
                 b.StartTime <= StartTime || b.EndTime >= EndTime);
         }
 
-        public void ApplyOptions(PracticeDiffOptions options)
+        public void ApplySettings(PracticeDiffSettings settings)
         {
-            _options = options;
-            ComboType = _options.ComboType;
+            _settings = settings;
+            ComboType = _settings.ComboType;
             if (_startCombo == 0) ComboType = ComboType.None;
             else if (_startCombo == 1) ComboType = ComboType.Spinner;
 

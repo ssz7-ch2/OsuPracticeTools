@@ -15,11 +15,11 @@ namespace OsuPracticeTools.Objects
     public class Script
     {
         public static Beatmap ParsedBeatmap { get; set; }
-        public static ScriptOptions GlobalOptions { get; set; } = new();
+        public static ScriptSettings GlobalSettings { get; set; } = new();
         private static readonly List<string> SortedBeatmapFiles = new();
         private static readonly Regex Regex = new(@"-([a-z]+) *([^-']*)");
 
-        private ScriptOptions _options;
+        private ScriptSettings _settings;
         private bool _delayedParse;
         public ScriptType ScriptType { get; set; } = ScriptType.CreateMap;
         public string ScriptString { get; }
@@ -27,10 +27,10 @@ namespace OsuPracticeTools.Objects
         public Script(string script)
         {
             ScriptString = script;
-            ParseOptions(script);
+            ParseSettings(script);
         }
 
-        private void ParseOptions(string script, bool delayedParse = false)
+        private void ParseSettings(string script, bool delayedParse = false)
         {
             var parts = script.Split(' ', 2, StringSplitOptions.TrimEntries);
 
@@ -59,19 +59,19 @@ namespace OsuPracticeTools.Objects
                     return;
                 case "set":
                     ScriptType = ScriptType.Set;
-                    _options = new ScriptOptions();
+                    _settings = new ScriptSettings();
                     break;
                 case "creatediffs":
                     ScriptType = ScriptType.CreateDiffs;
-                    _options = new ScriptOptions();
+                    _settings = new ScriptSettings();
                     break;
                 case "create":
                     ScriptType = ScriptType.CreateMap;
-                    _options = new ScriptOptions();
+                    _settings = new ScriptSettings();
                     break;
                 case "createmaps":
                     ScriptType = ScriptType.CreateMaps;
-                    _options = new ScriptOptions();
+                    _settings = new ScriptSettings();
                     break;
             }
 
@@ -81,7 +81,7 @@ namespace OsuPracticeTools.Objects
             string overrideNameFormat = null;
 
             if (matches.Any() && ScriptType == ScriptType.AddMap)
-                _options = new ScriptOptions();
+                _settings = new ScriptSettings();
 
             foreach (Match match in matches)
             {
@@ -94,70 +94,70 @@ namespace OsuPracticeTools.Objects
                         _delayedParse = true;
                         if (delayedParse)
                         {
-                            ScriptHelper.CopyOptions(_options, GlobalOptions);
+                            ScriptHelper.CopySettings(_settings, GlobalSettings);
                             break;
                         }
                         return;
                         
                     case "r":
-                        _options.SpeedRate = string.IsNullOrEmpty(param) ? 1 : double.Parse(param);
-                        if (Math.Abs(_options.SpeedRate - 1) < 0.001 || _options.SpeedRate is < 0.1d or > 5d)
-                            _options.SpeedRate = 1;
+                        _settings.SpeedRate = string.IsNullOrEmpty(param) ? 1 : double.Parse(param);
+                        if (Math.Abs(_settings.SpeedRate - 1) < 0.001 || _settings.SpeedRate is < 0.1d or > 5d)
+                            _settings.SpeedRate = 1;
                         break;
                     case "bpm":
-                        _options.BPM = string.IsNullOrEmpty(param) ? null : double.Parse(param);
+                        _settings.BPM = string.IsNullOrEmpty(param) ? null : double.Parse(param);
                         break;
                     case "pitch":
-                        _options.Pitch = true;
+                        _settings.Pitch = true;
                         break;
                     case "hr":
-                        _options.HardRock = true;
+                        _settings.HardRock = true;
                         break;
                     case "flip":
-                        _options.FlipDirection = string.IsNullOrEmpty(param) ? FlipDirection.Horizontal : FlipDirection.Vertical;
+                        _settings.FlipDirection = string.IsNullOrEmpty(param) ? FlipDirection.Horizontal : FlipDirection.Vertical;
                         break;
                     case "rs":
-                        _options.RemoveSpinners = true;
+                        _settings.RemoveSpinners = true;
                         break;
                     case "cs":
-                        _options.CS = string.IsNullOrEmpty(param) ? null : float.Parse(param);
-                        _options.DifficultyModified = true;
+                        _settings.CS = string.IsNullOrEmpty(param) ? null : float.Parse(param);
+                        _settings.DifficultyModified = true;
                         break;
                     case "ar":
-                        _options.AR = string.IsNullOrEmpty(param) ? null : float.Parse(param);
-                        _options.DifficultyModified = true;
+                        _settings.AR = string.IsNullOrEmpty(param) ? null : float.Parse(param);
+                        _settings.DifficultyModified = true;
                         break;
                     case "od":
-                        _options.OD = string.IsNullOrEmpty(param) ? null : float.Parse(param);
-                        _options.DifficultyModified = true;
+                        _settings.OD = string.IsNullOrEmpty(param) ? null : float.Parse(param);
+                        _settings.DifficultyModified = true;
                         break;
                     case "hp":
-                        _options.HP = string.IsNullOrEmpty(param) ? null : float.Parse(param);
-                        _options.DifficultyModified = true;
+                        _settings.HP = string.IsNullOrEmpty(param) ? null : float.Parse(param);
+                        _settings.DifficultyModified = true;
                         break;
                     case "maxcs":
-                        _options.MaxCS = string.IsNullOrEmpty(param) ? null : float.Parse(param);
-                        _options.DifficultyModified = true;
+                        _settings.MaxCS = string.IsNullOrEmpty(param) ? null : float.Parse(param);
+                        _settings.DifficultyModified = true;
                         break;
                     case "mincs":
-                        _options.MinCS = string.IsNullOrEmpty(param) ? null : float.Parse(param);
-                        _options.DifficultyModified = true;
+                        _settings.MinCS = string.IsNullOrEmpty(param) ? null : float.Parse(param);
+                        _settings.DifficultyModified = true;
                         break;
                     case "maxar":
-                        _options.MaxAR = string.IsNullOrEmpty(param) ? null : float.Parse(param);
-                        _options.DifficultyModified = true;
+                        _settings.MaxAR = string.IsNullOrEmpty(param) ? null : float.Parse(param);
+                        _settings.DifficultyModified = true;
                         break;
                     case "minar":
-                        _options.MinAR = string.IsNullOrEmpty(param) ? null : float.Parse(param);
-                        _options.DifficultyModified = true;
+                        _settings.MinAR = string.IsNullOrEmpty(param) ? null : float.Parse(param);
+                        _settings.DifficultyModified = true;
                         break;
                     case "maxod":
-                        _options.MaxOD = string.IsNullOrEmpty(param) ? null : float.Parse(param);
-                        _options.DifficultyModified = true;
+                        _settings.MaxOD = string.IsNullOrEmpty(param) ? null : float.Parse(param);
+                        _settings.DifficultyModified = true;
                         break;
                     case "minod":
-                        _options.MinOD = string.IsNullOrEmpty(param) ? null : float.Parse(param);
-                        _options.DifficultyModified = true;
+                        _settings.MinOD = string.IsNullOrEmpty(param) ? null : float.Parse(param);
+                        _settings.DifficultyModified = true;
                         break;
                     case "f":
                         // too hard to get name format in same regex
@@ -175,59 +175,59 @@ namespace OsuPracticeTools.Objects
                 switch (arg)
                 {
                     case "i":
-                        _options.ScriptDiffsType = ScriptDiffsType.Interval;
-                        _options.Interval = string.IsNullOrEmpty(param) ? 20 : int.Parse(param);
+                        _settings.ScriptDiffsType = ScriptDiffsType.Interval;
+                        _settings.Interval = string.IsNullOrEmpty(param) ? 20 : int.Parse(param);
                         break;
                     case "order":
                         if (param == "time")
-                            _options.PracticeDiffOptions.IndexType = IndexFormatType.Time;
-                        else if (param == "reverse")
-                            _options.PracticeDiffOptions.IndexType = IndexFormatType.TimeReverse;
+                            _settings.PracticeDiffSettings.IndexType = IndexFormatType.Time;
+                        else if (param == "rev")
+                            _settings.PracticeDiffSettings.IndexType = IndexFormatType.TimeReverse;
                         break;
                     case "next":
-                        _options.PracticeDiffOptions.EndTimeType = EndTimeType.NextDiff;
+                        _settings.PracticeDiffSettings.EndTimeType = EndTimeType.NextDiff;
                         break;
                     case "spinner":
-                        _options.PracticeDiffOptions.ComboType = ComboType.Spinner;
+                        _settings.PracticeDiffSettings.ComboType = ComboType.Spinner;
                         break;
                     case "slider":
-                        _options.PracticeDiffOptions.ComboType = ComboType.Slider;
-                        _options.PracticeDiffOptions.SliderDuration = string.IsNullOrEmpty(param) ? 830 : int.Parse(param);
+                        _settings.PracticeDiffSettings.ComboType = ComboType.Slider;
+                        _settings.PracticeDiffSettings.SliderDuration = string.IsNullOrEmpty(param) ? 830 : int.Parse(param);
                         break;
                     case "gap":
-                        _options.PracticeDiffOptions.GapDuration = string.IsNullOrEmpty(param) ? 1500 : int.Parse(param);
+                        _settings.PracticeDiffSettings.GapDuration = string.IsNullOrEmpty(param) ? 1500 : int.Parse(param);
                         break;
                 }
             }
 
-            if (_options != null)
+            if (_settings != null)
                 ApplyDefaultNameFormat(overrideNameFormat);
         }
 
         private void ApplyDefaultNameFormat(string overrideNameFormat = null)
         {
             var nameFormat = "{v}";
-            if (_options.HardRock)
-                nameFormat += _options.NameFormat[^1] == ' ' ? "HR" : " HR";
+            if (_settings.HardRock)
+                nameFormat += _settings.NameFormat[^1] == ' ' ? "HR" : " HR";
 
-            if (_options.FlipDirection != null)
-                nameFormat += _options.NameFormat[^1] == ' ' ? $"Flip{_options.FlipDirection.ToString()[0]}" : $" Flip{_options.FlipDirection.ToString()[0]}";
+            if (_settings.FlipDirection != null)
+                nameFormat += _settings.NameFormat[^1] == ' ' ? $"Flip{_settings.FlipDirection.ToString()[0]}" : $" Flip{_settings.FlipDirection.ToString()[0]}";
 
-            if (_options.SpeedRate != 1 || _options.BPM != null)
+            if (_settings.SpeedRate != 1 || _settings.BPM != null)
                 nameFormat += "{R}{BPM}";
 
-            if (_options.DifficultyModified)
+            if (_settings.DifficultyModified)
                 nameFormat += "{CS}{AR}{OD}{HP}";
 
-            if (_options.RemoveSpinners)
-                nameFormat += _options.NameFormat[^1] == ' ' ? "No Spinners" : " No Spinners";
+            if (_settings.RemoveSpinners)
+                nameFormat += _settings.NameFormat[^1] == ' ' ? "No Spinners" : " No Spinners";
 
             if (ScriptType is ScriptType.CreateMap or ScriptType.CreateMaps or ScriptType.AddMap)
-                _options.NameFormat = overrideNameFormat ?? nameFormat;
+                _settings.NameFormat = overrideNameFormat ?? nameFormat;
             else if (ScriptType == ScriptType.CreateDiffs)
             {
                 nameFormat += " ({i}/{n})";
-                _options.PracticeDiffOptions.NameFormat = overrideNameFormat ?? nameFormat;
+                _settings.PracticeDiffSettings.NameFormat = overrideNameFormat ?? nameFormat;
             }
         }
 
@@ -246,14 +246,14 @@ namespace OsuPracticeTools.Objects
                 requiredSections.Add(FileSection.HitObjects);
             }
 
-            if (_options.HardRock || _options.SpeedRate != 1 || _options.FlipDirection != null || _options.RemoveSpinners)
+            if (_settings.HardRock || _settings.SpeedRate != 1 || _settings.FlipDirection != null || _settings.RemoveSpinners)
             {
                 requiredSections.Add(FileSection.HitObjects);
 
-                if (_options.HardRock)
+                if (_settings.HardRock)
                     requiredSections.Add(FileSection.Difficulty);
 
-                if (_options.SpeedRate != 1)
+                if (_settings.SpeedRate != 1)
                 {
                     requiredSections.Add(FileSection.General);
                     requiredSections.Add(FileSection.Editor);
@@ -262,16 +262,16 @@ namespace OsuPracticeTools.Objects
                 }
             }
 
-            if (_options.DifficultyModified)
+            if (_settings.DifficultyModified)
                 requiredSections.Add(FileSection.Difficulty);
 
             return requiredSections.ToArray();
         }
 
-        public int Run(string beatmapFile, string beatmapFolder, List<int[]> diffTimes, Dictionary<string, HashSet<ScriptOptions>> beatmapFiles, int currentPlayTime)
+        public int Run(string beatmapFile, string beatmapFolder, List<int[]> diffTimes, Dictionary<string, HashSet<ScriptSettings>> beatmapFiles, int currentPlayTime)
         {
             if (_delayedParse)
-                ParseOptions(ScriptString, _delayedParse);
+                ParseSettings(ScriptString, _delayedParse);
             
             
             var sections = Array.Empty<FileSection>();
@@ -289,17 +289,17 @@ namespace OsuPracticeTools.Objects
 
             if (ScriptType is ScriptType.CreateMap or ScriptType.CreateDiffs)
             {
-                if (_options.BPM is not null)
-                    _options.SpeedRate = BPMToSpeedRate(ParsedBeatmap, (double)_options.BPM);
+                if (_settings.BPM is not null)
+                    _settings.SpeedRate = BPMToSpeedRate(ParsedBeatmap, (double)_settings.BPM);
 
-                if (_options.SpeedRate != 1 || _options.DifficultyModified)
+                if (_settings.SpeedRate != 1 || _settings.DifficultyModified)
                     ParsedBeatmap.Metadata.Tags.Add("osutrainer");
             }
 
             switch (ScriptType)
             {
                 case ScriptType.Set:
-                    ScriptHelper.CopyOptions(GlobalOptions, _options);
+                    ScriptHelper.CopySettings(GlobalSettings, _settings);
                     return (int)ScriptType.Set;
 
                 case ScriptType.AddDiff:
@@ -326,8 +326,8 @@ namespace OsuPracticeTools.Objects
 
                 case ScriptType.AddMap:
                     if (!beatmapFiles.ContainsKey(beatmapFile))
-                        beatmapFiles[beatmapFile] = new HashSet<ScriptOptions>();
-                    beatmapFiles[beatmapFile].Add(_options);
+                        beatmapFiles[beatmapFile] = new HashSet<ScriptSettings>();
+                    beatmapFiles[beatmapFile].Add(_settings);
                     if (!SortedBeatmapFiles.Contains(beatmapFile))
                         SortedBeatmapFiles.Add(beatmapFile);
                     return (int)ScriptType.AddMap;
@@ -357,45 +357,45 @@ namespace OsuPracticeTools.Objects
 
                     var times = diffTimes;
 
-                    if (_options.ScriptDiffsType == ScriptDiffsType.Interval)
-                        times = PracticeDiffExtensions.GetTimesFromInterval(_options.Interval, ParsedBeatmap);
+                    if (_settings.ScriptDiffsType == ScriptDiffsType.Interval)
+                        times = PracticeDiffExtensions.GetTimesFromInterval(_settings.Interval, ParsedBeatmap);
 
                     if (!times.Any())
                         return -1;
 
                     var newBeatmap = ParsedBeatmap;
 
-                    if (_options.HardRock || _options.SpeedRate != 1 || _options.FlipDirection != null || _options.RemoveSpinners)
+                    if (_settings.HardRock || _settings.SpeedRate != 1 || _settings.FlipDirection != null || _settings.RemoveSpinners)
                     {
                         newBeatmap = ParsedBeatmap.Clone(sections);
 
-                        if (_options.RemoveSpinners)
+                        if (_settings.RemoveSpinners)
                             newBeatmap.RemoveSpinners();
 
-                        if (_options.HardRock)
+                        if (_settings.HardRock)
                             newBeatmap.ApplyHR();
 
-                        if (_options.FlipDirection != null)
-                            newBeatmap.ApplyFlip((FlipDirection)_options.FlipDirection);
+                        if (_settings.FlipDirection != null)
+                            newBeatmap.ApplyFlip((FlipDirection)_settings.FlipDirection);
 
-                        if (_options.SpeedRate != 1)
+                        if (_settings.SpeedRate != 1)
                         {
-                            var adjustTiming = newBeatmap.ChangeSpeedRate(GlobalConstants.BEATMAP_TEMP, beatmapFolder, _options.SpeedRate, _options.Pitch, _options.AudioProcessor);
+                            var adjustTiming = newBeatmap.ChangeSpeedRate(GlobalConstants.BEATMAP_TEMP, beatmapFolder, _settings.SpeedRate, _settings.Pitch, _settings.AudioProcessor);
                             foreach (var time in times)
                             {
-                                time[0] = (int) (time[0] / _options.SpeedRate) + adjustTiming;
-                                time[1] = (int) Math.Ceiling(time[1] / _options.SpeedRate) + adjustTiming;
+                                time[0] = (int) (time[0] / _settings.SpeedRate) + adjustTiming;
+                                time[1] = (int) Math.Ceiling(time[1] / _settings.SpeedRate) + adjustTiming;
                             }
                         }
                     }
 
                     var diffs = PracticeDiffExtensions.GetDiffsFromTimes(times, newBeatmap);
 
-                    diffs.CreateDiffs(_options, GlobalConstants.BEATMAP_TEMP, beatmapFolder);
+                    diffs.CreateDiffs(_settings, GlobalConstants.BEATMAP_TEMP, beatmapFolder);
                     return (int)ScriptType.CreateDiffs;
 
                 case ScriptType.CreateMap:
-                    Create(_options, ParsedBeatmap, GlobalConstants.BEATMAP_TEMP, beatmapFolder, sections);
+                    Create(_settings, ParsedBeatmap, GlobalConstants.BEATMAP_TEMP, beatmapFolder, sections);
 
                     return (int)ScriptType.CreateMap;
 
@@ -407,20 +407,20 @@ namespace OsuPracticeTools.Objects
                         var beatmap = BeatmapDecoder.Decode(bmapFileSet.Key);
                         beatmap.Metadata.Tags.Add("prTools");
 
-                        Parallel.ForEach(bmapFileSet.Value, options =>
+                        Parallel.ForEach(bmapFileSet.Value, settings =>
                         {
-                            options ??= _options;
-                            if (options.BPM is not null)
-                                options.SpeedRate = BPMToSpeedRate(beatmap, (double)options.BPM);
+                            settings ??= _settings;
+                            if (settings.BPM is not null)
+                                settings.SpeedRate = BPMToSpeedRate(beatmap, (double)settings.BPM);
 
-                            if (options.SpeedRate != 1 || _options.DifficultyModified)
+                            if (settings.SpeedRate != 1 || _settings.DifficultyModified)
                                 beatmap.Metadata.Tags.Add("osutrainer");
 
                             var bmapFolder = Path.GetDirectoryName(bmapFileSet.Key);
                             var tempFolder = Path.Combine(GlobalConstants.BEATMAPS_TEMP, new DirectoryInfo(bmapFolder).Name);
                             Directory.CreateDirectory(tempFolder);
 
-                            Create(options, beatmap, tempFolder, bmapFolder, sections);
+                            Create(settings, beatmap, tempFolder, bmapFolder, sections);
                         });
 
                     });
@@ -440,31 +440,31 @@ namespace OsuPracticeTools.Objects
             return speedRate;
         }
 
-        private void Create(ScriptOptions options, Beatmap originalBeatmap, string tempFolder, string beatmapFolder, FileSection[] sections)
+        private void Create(ScriptSettings settings, Beatmap originalBeatmap, string tempFolder, string beatmapFolder, FileSection[] sections)
         {
             var beatmap = originalBeatmap.Clone(sections);
 
-            if (options.RemoveSpinners)
+            if (settings.RemoveSpinners)
                 beatmap.RemoveSpinners();
 
-            if (options.HardRock)
+            if (settings.HardRock)
                 beatmap.ApplyHR();
 
-            if (options.FlipDirection != null)
-                beatmap.ApplyFlip((FlipDirection)options.FlipDirection);
+            if (settings.FlipDirection != null)
+                beatmap.ApplyFlip((FlipDirection)settings.FlipDirection);
 
-            if (options.SpeedRate != 1)
-                beatmap.ChangeSpeedRate(tempFolder, beatmapFolder, options.SpeedRate, options.Pitch, options.AudioProcessor);
+            if (settings.SpeedRate != 1)
+                beatmap.ChangeSpeedRate(tempFolder, beatmapFolder, settings.SpeedRate, settings.Pitch, settings.AudioProcessor);
 
             var newBeatmap = beatmap;
-            if (options.DifficultyModified)
+            if (settings.DifficultyModified)
             {
                 newBeatmap = beatmap.Clone(new[] { FileSection.Difficulty });
-                newBeatmap.ModifyDifficulty(options.CS, options.AR, options.OD, options.HP,
-                    options.MinCS, options.MaxCS, options.MinAR, options.MaxAR, options.MinOD, options.MaxOD);
+                newBeatmap.ModifyDifficulty(settings.CS, settings.AR, settings.OD, settings.HP,
+                    settings.MinCS, settings.MaxCS, settings.MinAR, settings.MaxAR, settings.MinOD, settings.MaxOD);
             }
 
-            newBeatmap.FormatName(beatmap, options.NameFormat, options.SpeedRate);
+            newBeatmap.FormatName(beatmap, settings.NameFormat, settings.SpeedRate);
 
             // save to temp folder to be zipped to osz
             newBeatmap.Save(tempFolder, beatmapFolder, false, true);

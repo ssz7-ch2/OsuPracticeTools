@@ -2,7 +2,7 @@
 
 namespace OsuPracticeTools.Objects
 {
-    public class PracticeDiffOptions
+    public class PracticeDiffSettings
     {
         public string NameFormat { get; set; } = "{v}";
         public IndexFormatType IndexType { get; set; } = IndexFormatType.AddOrder;

@@ -31,7 +31,7 @@ namespace OsuPracticeTools
         private static bool _hotkeysLoaded;
         private static Mutex _mutex;
         private static readonly List<int[]> Diffs = new();
-        private static readonly Dictionary<string, HashSet<ScriptOptions>> BeatmapFiles = new();
+        private static readonly Dictionary<string, HashSet<ScriptSettings>> BeatmapFiles = new();
         private static readonly Dictionary<List<Keys>, List<Script>> KeyScriptDictionary = new();
         private static readonly SoundPlayer ScriptStart = new("Resources/scriptStart.wav");
         private static readonly SoundPlayer ScriptFinish = new("Resources/scriptFinish.wav");
@@ -200,7 +200,7 @@ namespace OsuPracticeTools
 
         private static void LoadExtraHotkeys()
         {
-            // reset global options
+            // reset global settings
             GlobalKeyboardHook.HookedDownKeys.AddUnique(ResetGlobalKey);
 
             foreach (var statKey in StatKeys)
@@ -345,7 +345,7 @@ namespace OsuPracticeTools
             if (keys.SequenceEqual(ResetGlobalKey))
                 ScriptStart.Play();
 
-            ScriptHelper.SetGlobalOptions(keys, beatmapFile, StatKeys, RateKey, ResetGlobalKey);
+            ScriptHelper.SetGlobalSettings(keys, beatmapFile, StatKeys, RateKey, ResetGlobalKey);
         }
 
         private static bool GetCurrentBeatmapInfo(string songsFolder, out string currentOsuFile, out string beatmapFile, out string beatmapFolder)

@@ -8,9 +8,9 @@ namespace OsuPracticeTools.Helpers
 {
     public static class PracticeDiffExtensions
     {
-        public static void ReadjustEndTimes(this List<PracticeDiff> diffs, PracticeDiffOptions options)
+        public static void ReadjustEndTimes(this List<PracticeDiff> diffs, PracticeDiffSettings settings)
         {
-            if (options.EndTimeType != EndTimeType.NextDiff || !diffs.Any()) return;
+            if (settings.EndTimeType != EndTimeType.NextDiff || !diffs.Any()) return;
 
             var reorder = diffs.OrderBy(p => p.StartTime).ToList();
 
@@ -19,11 +19,11 @@ namespace OsuPracticeTools.Helpers
                 reorder[i].EndTime = reorder[i + 1].StartTime;
         }
 
-        public static void RenameDiffs(this List<PracticeDiff> diffs, PracticeDiffOptions options, double speedRate = 1)
+        public static void RenameDiffs(this List<PracticeDiff> diffs, PracticeDiffSettings settings, double speedRate = 1)
         {
             if (!diffs.Any()) return;
 
-            IEnumerable<PracticeDiff> reorder = options.IndexType switch
+            IEnumerable<PracticeDiff> reorder = settings.IndexType switch
             {
                 IndexFormatType.Time => diffs.OrderBy(p => p.StartTime),
                 IndexFormatType.TimeReverse => diffs.OrderByDescending(p => p.StartTime),
@@ -37,16 +37,16 @@ namespace OsuPracticeTools.Helpers
             }
         }
 
-        public static void CreateDiffs(this List<PracticeDiff> diffs, ScriptOptions options, string tempFolder, string beatmapFolder)
+        public static void CreateDiffs(this List<PracticeDiff> diffs, ScriptSettings settings, string tempFolder, string beatmapFolder)
         {
             foreach (var practiceDiff in diffs)
             {
-                practiceDiff.ApplyOptions(options.PracticeDiffOptions);
-                practiceDiff.ModifyDifficulty(options.CS, options.AR, options.OD, options.HP, options.MinCS, options.MaxCS, options.MinAR, options.MaxAR, options.MinOD, options.MaxOD);
+                practiceDiff.ApplySettings(settings.PracticeDiffSettings);
+                practiceDiff.ModifyDifficulty(settings.CS, settings.AR, settings.OD, settings.HP, settings.MinCS, settings.MaxCS, settings.MinAR, settings.MaxAR, settings.MinOD, settings.MaxOD);
             }
 
-            diffs.ReadjustEndTimes(options.PracticeDiffOptions);
-            diffs.RenameDiffs(options.PracticeDiffOptions, options.SpeedRate);
+            diffs.ReadjustEndTimes(settings.PracticeDiffSettings);
+            diffs.RenameDiffs(settings.PracticeDiffSettings, settings.SpeedRate);
             diffs.ForEach(p => p.Save(tempFolder, beatmapFolder));
         }
 

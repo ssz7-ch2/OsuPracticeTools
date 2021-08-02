@@ -2,7 +2,7 @@
 
 namespace OsuPracticeTools.Objects
 {
-    public class ScriptOptions
+    public class ScriptSettings
     {
         public ScriptDiffsType ScriptDiffsType { get; set; } = ScriptDiffsType.Current;
         public int Interval { get; set; } = 20;
@@ -24,7 +24,7 @@ namespace OsuPracticeTools.Objects
         public float? MaxOD { get; set; }
         public bool DifficultyModified { get; set; } = false;
         public string NameFormat { get; set; } = "{v}";
-        public PracticeDiffOptions PracticeDiffOptions { get; set; } = new();
+        public PracticeDiffSettings PracticeDiffSettings { get; set; } = new();
         public AudioProcessor AudioProcessor { get; set; } = AudioProcessor.Bass;
     }
 }
