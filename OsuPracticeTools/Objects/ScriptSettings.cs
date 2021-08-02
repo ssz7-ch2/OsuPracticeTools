@@ -25,6 +25,5 @@ namespace OsuPracticeTools.Objects
         public bool DifficultyModified { get; set; } = false;
         public string NameFormat { get; set; } = "{v}";
         public PracticeDiffSettings PracticeDiffSettings { get; set; } = new();
-        public AudioProcessor AudioProcessor { get; set; } = AudioProcessor.Bass;
     }
 }

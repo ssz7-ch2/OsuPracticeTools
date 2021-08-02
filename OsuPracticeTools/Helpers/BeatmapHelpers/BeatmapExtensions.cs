@@ -128,47 +128,43 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
 
         public static void RemoveSpinners(this Beatmap beatmap) => beatmap.HitObjects.RemoveAll(h => h is Spinner);
 
-        public static int ChangeSpeedRate(this Beatmap beatmap, string tempFolder, string beatmapFolder, double rate, bool pitch, AudioProcessor processor)
+        public static void ChangeSpeedRate(this Beatmap beatmap, string tempFolder, string beatmapFolder, double rate, bool pitch)
         {
             var newAudioFile = $"{Path.GetFileNameWithoutExtension(beatmap.General.AudioFilename)} {rate:0.000}x.mp3";
-            var adjustTiming = AudioModifier.ChangeAudioRate(Path.Combine(beatmapFolder, beatmap.General.AudioFilename), Path.Combine(beatmapFolder, newAudioFile), Path.Combine(tempFolder, newAudioFile), rate, pitch, processor);
-
-            if (adjustTiming != 0)
-                newAudioFile = newAudioFile.Replace(".mp3", $" -t {adjustTiming}.mp3");
+            if (!File.Exists(Path.Combine(beatmapFolder, newAudioFile)))
+                AudioModifier.ChangeAudioRate(Path.Combine(beatmapFolder, beatmap.General.AudioFilename), Path.Combine(tempFolder, newAudioFile), rate, pitch);
 
             beatmap.General.AudioFilename = newAudioFile;
             beatmap.General.AudioLeadIn = (int)(beatmap.General.AudioLeadIn / rate);
-            beatmap.General.PreviewTime = (int)(beatmap.General.PreviewTime / rate) + adjustTiming;
+            beatmap.General.PreviewTime = (int)(beatmap.General.PreviewTime / rate);
             beatmap.General.MainBPM *= rate;
             beatmap.General.Length = (int)(beatmap.General.Length / rate);
 
-            beatmap.Editor.Bookmarks = beatmap.Editor.Bookmarks?.Select(b => Convert.ToInt32(b / rate) + adjustTiming).ToArray();
+            beatmap.Editor.Bookmarks = beatmap.Editor.Bookmarks?.Select(b => Convert.ToInt32(b / rate)).ToArray();
 
             beatmap.ModifyDifficulty(
                 ar: BeatmapDifficulty.ApplyRateChangeAR(beatmap.Difficulty.ApproachRate, rate),
                 od: BeatmapDifficulty.ApplyRateChangeOD(beatmap.Difficulty.OverallDifficulty, rate));
 
-            beatmap.Events.VideoStartTime = (int)(beatmap.Events.VideoStartTime / rate) + adjustTiming;
+            beatmap.Events.VideoStartTime = (int)(beatmap.Events.VideoStartTime / rate);
             foreach (var b in beatmap.Events.Breaks)
             {
-                b.StartTime = (int)(b.StartTime / rate) + adjustTiming;
-                b.EndTime = (int)(b.EndTime / rate) + adjustTiming;
+                b.StartTime = (int)(b.StartTime / rate);
+                b.EndTime = (int)(b.EndTime / rate);
             }
 
             foreach (var timingPoint in beatmap.TimingPoints)
             {
-                timingPoint.Time = (int)(timingPoint.Time / rate) + adjustTiming;
+                timingPoint.Time = (int)(timingPoint.Time / rate);
                 if (timingPoint.Uninherited)
                     timingPoint.BeatLength /= rate;
             }
 
             foreach (var hitObject in beatmap.HitObjects)
             {
-                hitObject.StartTime = (int)(hitObject.StartTime / rate) + adjustTiming;
-                hitObject.EndTime = (int)(hitObject.EndTime / rate) + adjustTiming;
+                hitObject.StartTime = (int)(hitObject.StartTime / rate);
+                hitObject.EndTime = (int)(hitObject.EndTime / rate);
             }
-
-            return adjustTiming;
         }
 
         public static HitObject HitObjectAtOrAfter(this Beatmap beatmap, int time) => beatmap.HitObjects.FirstOrDefault(t => t.StartTime >= time);

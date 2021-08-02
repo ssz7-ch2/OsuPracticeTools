@@ -380,11 +380,11 @@ namespace OsuPracticeTools.Objects
 
                         if (_settings.SpeedRate != 1)
                         {
-                            var adjustTiming = newBeatmap.ChangeSpeedRate(GlobalConstants.BEATMAP_TEMP, beatmapFolder, _settings.SpeedRate, _settings.Pitch, _settings.AudioProcessor);
+                            newBeatmap.ChangeSpeedRate(GlobalConstants.BEATMAP_TEMP, beatmapFolder, _settings.SpeedRate, _settings.Pitch);
                             foreach (var time in times)
                             {
-                                time[0] = (int) (time[0] / _settings.SpeedRate) + adjustTiming;
-                                time[1] = (int) Math.Ceiling(time[1] / _settings.SpeedRate) + adjustTiming;
+                                time[0] = (int) (time[0] / _settings.SpeedRate);
+                                time[1] = (int) Math.Ceiling(time[1] / _settings.SpeedRate);
                             }
                         }
                     }
@@ -454,7 +454,7 @@ namespace OsuPracticeTools.Objects
                 beatmap.ApplyFlip((FlipDirection)settings.FlipDirection);
 
             if (settings.SpeedRate != 1)
-                beatmap.ChangeSpeedRate(tempFolder, beatmapFolder, settings.SpeedRate, settings.Pitch, settings.AudioProcessor);
+                beatmap.ChangeSpeedRate(tempFolder, beatmapFolder, settings.SpeedRate, settings.Pitch);
 
             var newBeatmap = beatmap;
             if (settings.DifficultyModified)
