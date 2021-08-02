@@ -19,18 +19,6 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
             if (streamFX == 0)
                 throw new Exception($"Error: Failed to change rate for {inFile}\nBASS_FX_TempoCreate failed - {Bass.BASS_ErrorGetCode()}");
 
-            float initialFreq = 0;
-            Bass.BASS_ChannelGetAttribute(streamFX, BASSAttribute.BASS_ATTRIB_FREQ, ref initialFreq);
-            if (initialFreq <= 0)
-                initialFreq = 44100;
-
-            if (changePitch)
-            {
-                if (!Bass.BASS_ChannelSetAttribute(streamFX, BASSAttribute.BASS_ATTRIB_FREQ, initialFreq * (float)rate))
-                    throw new Exception($"Error: Failed to change rate for {inFile}\nBASS_ChannelSetAttribute failed - {Bass.BASS_ErrorGetCode()}");
-            }
-
-
             if (!Bass.BASS_ChannelSetAttribute(streamFX, BASSAttribute.BASS_ATTRIB_TEMPO, (float)((rate - 1) * 100)))
                 throw new Exception($"Error: Failed to change rate for {inFile}\nBASS_ChannelSetAttribute failed - {Bass.BASS_ErrorGetCode()}");
 
@@ -40,6 +28,13 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
                 throw new Exception($"Error: Failed to change rate for {inFile}\nBASS_ChannelSetAttribute failed - {Bass.BASS_ErrorGetCode()}");
             if (!Bass.BASS_ChannelSetAttribute(streamFX, BASSAttribute.BASS_ATTRIB_TEMPO_OPTION_SEQUENCE_MS, 30))
                 throw new Exception($"Error: Failed to change rate for {inFile}\nBASS_ChannelSetAttribute failed - {Bass.BASS_ErrorGetCode()}");
+
+            if (changePitch)
+            {
+                var semitones = 1200.0 * Math.Log(rate) / Math.Log(2) / 100;
+                if (!Bass.BASS_ChannelSetAttribute(streamFX, BASSAttribute.BASS_ATTRIB_TEMPO_PITCH, (float)semitones))
+                    throw new Exception($"Error: BASS_ChannelSetAttribute failed - {Bass.BASS_ErrorGetCode()}");
+            }
 
             encoder = BassEnc.BASS_Encode_Start(streamFX, $"binaries/lame --alt-preset standard - \"{outFile}\"",
                 0, null, IntPtr.Zero);
