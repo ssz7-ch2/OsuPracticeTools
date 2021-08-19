@@ -199,6 +199,7 @@ namespace OsuPracticeTools.Objects
                         break;
                     case "next":
                         _settings.PracticeDiffSettings.EndTimeType = EndTimeType.NextDiff;
+                        _settings.PracticeDiffSettings.NextAmount = string.IsNullOrEmpty(param) ? 1 : int.Parse(param);
                         break;
                     case "spinner":
                         _settings.PracticeDiffSettings.ComboType = ComboType.Spinner;
