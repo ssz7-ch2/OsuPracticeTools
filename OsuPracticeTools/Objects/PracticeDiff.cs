@@ -126,6 +126,21 @@ namespace OsuPracticeTools.Objects
 
         private List<HitObject> GenerateCombo()
         {
+            if (!_beatmap.TimingPoints.Where(t => t.Uninherited).Any())
+            {
+                _beatmap.TimingPoints.Add(new TimingPoint()
+                {
+                    Time = 0,
+                    BeatLength = 1000,
+                    Meter = 4,
+                    SampleSet = SampleSet.Normal,
+                    SampleIndex = 0,
+                    Volume = 100,
+                    Uninherited = true,
+                    Effects = Effects.None
+                });
+            }
+
             var comboEndTime = StartTime - _settings.GapDuration;
 
             comboEndTime = _beatmap.TimingTickBefore(comboEndTime, 2);
