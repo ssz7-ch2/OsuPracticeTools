@@ -63,6 +63,8 @@ namespace OsuPracticeTools.Objects
         {
             // clone rest of necessary sections
 
+            _beatmap.General = _beatmap.CloneGeneralSection();
+            _beatmap.General.Countdown = CountdownType.None;
             _beatmap.Events = _beatmap.CloneEventsSection();
             _beatmap.TimingPoints = _beatmap.CloneTimingPointsSection();
 
