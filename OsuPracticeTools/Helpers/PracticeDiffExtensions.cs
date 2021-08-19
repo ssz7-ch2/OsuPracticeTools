@@ -16,8 +16,8 @@ namespace OsuPracticeTools.Helpers
             var reorder = diffs.OrderBy(p => p.StartTime).ToList();
 
             // reorder.Count - 1 since last diff already has correct end time
-            for (int i = 0; i < reorder.Count - settings.NextAmount; i++)
-                reorder[i].EndTime = reorder[i + settings.NextAmount].StartTime;
+            for (int i = 0; i < reorder.Count - (settings.ExtendAmount + 1); i++)
+                reorder[i].EndTime = reorder[i + settings.ExtendAmount + 1].StartTime;
         }
 
         public static void RenameDiffs(this List<PracticeDiff> diffs, PracticeDiffSettings settings, double speedRate = 1)
