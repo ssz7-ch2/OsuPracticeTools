@@ -80,7 +80,10 @@ namespace OsuPracticeTools.Helpers
                         for (int i = 0; i < beatmap.HitObjects.Count; i++)
                         {
                             if (beatmap.HitObjects[i].StartTime >= startTime)
+                            { 
                                 startIndex = i;
+                                break;
+                            }
                         }
                     }
                     for (int i = startIndex; i < beatmap.HitObjects.Count; i += interval)
