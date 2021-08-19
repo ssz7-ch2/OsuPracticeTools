@@ -86,7 +86,7 @@ namespace OsuPracticeTools.Objects
             foreach (Match match in matches)
             {
                 var arg = match.Groups[1].Value.ToLower();
-                var param = match.Groups[2].Value;
+                var param = match.Groups[2].Value.Trim();
 
                 switch (arg)
                 {
@@ -176,7 +176,20 @@ namespace OsuPracticeTools.Objects
                 {
                     case "i":
                         _settings.ScriptDiffsType = ScriptDiffsType.Interval;
-                        _settings.Interval = string.IsNullOrEmpty(param) ? 20 : int.Parse(param);
+                        if (string.IsNullOrEmpty(param))
+                        {
+                            _settings.Interval = 30;
+                            _settings.IntervalType = IntervalType.HitObjects;
+                        }
+                        else
+                        {
+                            if (param[^1] == 'm')
+                            {
+                                _settings.IntervalType = IntervalType.Measures;
+                                param = param[0..^1];
+                            }
+                            _settings.Interval = int.Parse(param);
+                        }
                         break;
                     case "order":
                         if (param == "time")
@@ -268,7 +281,7 @@ namespace OsuPracticeTools.Objects
             return requiredSections.ToArray();
         }
 
-        public int Run(string beatmapFile, string beatmapFolder, List<int[]> diffTimes, Dictionary<string, HashSet<ScriptSettings>> beatmapFiles, int currentPlayTime)
+        public int Run(string beatmapFile, string beatmapFolder, List<int[]> diffTimes, Dictionary<string, HashSet<ScriptSettings>> beatmapFiles, int currentPlayTime, int osuStatus = 0)
         {
             if (_delayedParse)
                 ParseSettings(ScriptString, _delayedParse);
@@ -358,7 +371,7 @@ namespace OsuPracticeTools.Objects
                     var times = diffTimes;
 
                     if (_settings.ScriptDiffsType == ScriptDiffsType.Interval)
-                        times = PracticeDiffExtensions.GetTimesFromInterval(_settings.Interval, ParsedBeatmap);
+                        times = PracticeDiffExtensions.GetTimesFromInterval(_settings.Interval, ParsedBeatmap, _settings.IntervalType, osuStatus == 1 ? currentPlayTime : null);
 
                     if (!times.Any())
                         return -1;

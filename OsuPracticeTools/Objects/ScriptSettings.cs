@@ -5,7 +5,8 @@ namespace OsuPracticeTools.Objects
     public class ScriptSettings
     {
         public ScriptDiffsType ScriptDiffsType { get; set; } = ScriptDiffsType.Current;
-        public int Interval { get; set; } = 20;
+        public int Interval { get; set; } = 30;
+        public IntervalType IntervalType { get; set; } = IntervalType.HitObjects;
         public double SpeedRate { get; set; } = 1;
         public bool Pitch { get; set; } = false;
         public double? BPM { get; set; } = null;

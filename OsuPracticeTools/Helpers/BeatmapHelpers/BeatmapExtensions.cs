@@ -184,7 +184,7 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
             return null;
         }
 
-        public static int TimingTickBefore(this Beatmap beatmap, int time, int beatRate)
+        public static int TimingTickBefore(this Beatmap beatmap, int time, double beatRate)
         {
             var timingPoint = beatmap.UninheritedTimingPointAt(time);
             var adjustedBeatLength = timingPoint.BeatLength / beatRate;

@@ -263,6 +263,7 @@ namespace OsuPracticeTools
         private static async void RunScripts(List<Keys> multiKey, string originalBeatmapFile, string beatmapFile, string beatmapFolder)
         {
             var currentTime = _osuReader.ReadPlayTime();
+            _osuReader.GetCurrentStatus(out int osuStatus);
 
             try
             {
@@ -278,7 +279,7 @@ namespace OsuPracticeTools
                     {
                         int scriptType;
                         if (script.ScriptType == ScriptType.CreateDiffs)
-                            scriptType = script.Run(originalBeatmapFile, beatmapFolder, Diffs, BeatmapFiles, currentTime);
+                            scriptType = script.Run(originalBeatmapFile, beatmapFolder, Diffs, BeatmapFiles, currentTime, osuStatus);
                         else
                             scriptType = script.Run(beatmapFile, beatmapFolder, Diffs, BeatmapFiles, currentTime);
 
