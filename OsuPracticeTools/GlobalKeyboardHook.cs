@@ -90,7 +90,7 @@ namespace OsuPracticeTools
 								KeyDown(null, keysWithModifiers);
 							}
 
-							if (PressedKeys.Count > 0 && HookedDownKeys.Any(k => k[0] == PressedKeys[0]))
+							if (PressedKeys.Count > 0 && (HookedDownKeys.Any(k => k[0] == keysWithModifiers[0]) || HookedUpKeys.Any(k => k[0] == keysWithModifiers[0])))
 								handled = true;
 						}
 					}
@@ -117,7 +117,7 @@ namespace OsuPracticeTools
 								KeyUp(null, keysWithModifiers);
 							}
 
-							if (PressedKeys.Count > 0 && HookedDownKeys.Any(k => k[0] == PressedKeys[0]))
+							if (PressedKeys.Count > 0 && (HookedDownKeys.Any(k => k[0] == keysWithModifiers[0]) || HookedUpKeys.Any(k => k[0] == keysWithModifiers[0])))
 								handled = true;
 						}
 
