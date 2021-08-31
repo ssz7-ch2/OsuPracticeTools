@@ -11,5 +11,7 @@ namespace OsuPracticeTools.Objects
         public ComboType ComboType { get; set; } = ComboType.None;
         public int GapDuration { get; set; } = 1500;
         public int SliderDuration { get; set; } = 830;
+        public int SkinComboColors { get; set; } = 4;
+        public bool CirclesComboColor { get; set; } = false;
     }
 }

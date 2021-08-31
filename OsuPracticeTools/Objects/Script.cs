@@ -197,6 +197,10 @@ namespace OsuPracticeTools.Objects
                         else if (param == "rev")
                             _settings.PracticeDiffSettings.IndexType = IndexFormatType.TimeReverse;
                         break;
+                    case "cc":
+                        _settings.PracticeDiffSettings.CirclesComboColor = true;
+                        _settings.PracticeDiffSettings.SkinComboColors = string.IsNullOrEmpty(param) ? 4 : int.Parse(param);
+                        break;
                     case "next":
                         _settings.PracticeDiffSettings.EndTimeType = EndTimeType.NextDiff;
                         _settings.PracticeDiffSettings.ExtendAmount = string.IsNullOrEmpty(param) ? 1 : int.Parse(param);
