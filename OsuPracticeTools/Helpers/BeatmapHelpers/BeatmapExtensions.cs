@@ -192,11 +192,11 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
                 Math.Floor(Math.Round((time - timingPoint.Time) / adjustedBeatLength, 2)) + timingPoint.Time);
         }
 
-        public static int ColorOffsetAt(this Beatmap beatmap, int comboColours, int time)
+        public static int ColorOffsetAt(this Beatmap beatmap, int comboColours, int time, bool ignoreComboOffset = false)
         {
             var newCombos = beatmap.HitObjects.Where(h => h.NewCombo && h.StartTime <= time && h is not Spinner);
 
-            return Math.Max(0, newCombos.Aggregate(-1, (current, combo) => (current + 1 + combo.ComboColourOffset) % comboColours));
+            return Math.Max(0, newCombos.Aggregate(-1, (current, combo) => (current + 1 + (ignoreComboOffset ? 0 : combo.ComboColourOffset)) % comboColours));
         }
 
         // cloning does not include unparsed since if section has unparsed, it means you aren't going to use the section, thus cloning is meaningless

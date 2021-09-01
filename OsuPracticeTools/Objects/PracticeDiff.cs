@@ -145,7 +145,7 @@ namespace OsuPracticeTools.Objects
             if (ComboType != ComboType.None && _settings.CirclesComboColor)
             {
                 var comboColors = _settings.SkinComboColors;
-                circles = _beatmap.ColorOffsetAt(comboColors, StartTime);
+                circles = _beatmap.ColorOffsetAt(comboColors, StartTime, true);
                 if (_hitObjectAtStartTime.NewCombo || circles != 0)
                 {
                     if (ComboType == ComboType.Slider)
@@ -164,7 +164,7 @@ namespace OsuPracticeTools.Objects
             return ComboType switch
             {
                 ComboType.Slider => GenerateSlider(comboEndTime, colorOffset, circles),
-                ComboType.Spinner => GenerateSpinners(comboEndTime, colorOffset, circles),
+                ComboType.Spinner => GenerateSpinners(comboEndTime, circles),
                 _ => new List<HitObject>()
             };
         }
@@ -240,8 +240,10 @@ namespace OsuPracticeTools.Objects
             return hitObjects;
         }
 
-        private List<HitObject> GenerateSpinners(int endTime, int colorOffset, int circles = 0)
+        private List<HitObject> GenerateSpinners(int endTime, int circles = 0)
         {
+            var beatLength = _originalBeatmap.BeatLengthAt(StartTime);
+            endTime = (int)(endTime - (beatLength / 2 * circles));
             GenerateSoftTimingPoint(endTime);
             GenerateHighBPMTimingPoint(endTime);
 
@@ -262,7 +264,6 @@ namespace OsuPracticeTools.Objects
 
             if (Combo - circles >= 0)
             {
-                var beatLength = _originalBeatmap.BeatLengthAt(StartTime);
                 var startTime = _hitObjectAtStartTime.StartTime - (beatLength / 2 * circles);
                 for (int i = 0; i < circles; i++)
                 {
