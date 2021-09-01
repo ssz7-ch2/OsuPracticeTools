@@ -90,8 +90,15 @@ namespace OsuPracticeTools
 								KeyDown(null, keysWithModifiers);
 							}
 
-							if (PressedKeys.Count > 0 && (HookedDownKeys.Any(k => k[0] == keysWithModifiers[0]) || HookedUpKeys.Any(k => k[0] == keysWithModifiers[0])))
+							try
+							{
+								if (PressedKeys.Count > 0 && (HookedDownKeys.Any(k => k[0] == keysWithModifiers[0]) || HookedUpKeys.Any(k => k[0] == keysWithModifiers[0])))
+									handled = true;
+							}
+							catch (InvalidOperationException)
+							{
 								handled = true;
+							}
 						}
 					}
 
@@ -117,8 +124,15 @@ namespace OsuPracticeTools
 								KeyUp(null, keysWithModifiers);
 							}
 
-							if (PressedKeys.Count > 0 && (HookedDownKeys.Any(k => k[0] == keysWithModifiers[0]) || HookedUpKeys.Any(k => k[0] == keysWithModifiers[0])))
+							try
+							{
+								if (PressedKeys.Count > 0 && (HookedDownKeys.Any(k => k[0] == keysWithModifiers[0]) || HookedUpKeys.Any(k => k[0] == keysWithModifiers[0])))
+									handled = true;
+							}
+							catch (InvalidOperationException)
+							{
 								handled = true;
+							}
 						}
 
 						PressedKeys.Remove(key);
