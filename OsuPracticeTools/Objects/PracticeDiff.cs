@@ -243,7 +243,9 @@ namespace OsuPracticeTools.Objects
         private List<HitObject> GenerateSpinners(int endTime, int circles = 0)
         {
             var beatLength = _originalBeatmap.BeatLengthAt(StartTime);
-            endTime = (int)(endTime - (beatLength / 2 * circles));
+            if (Combo - circles >= 0)
+                endTime = (int)(endTime - (beatLength / 2 * circles));
+
             GenerateSoftTimingPoint(endTime);
             GenerateHighBPMTimingPoint(endTime);
 
