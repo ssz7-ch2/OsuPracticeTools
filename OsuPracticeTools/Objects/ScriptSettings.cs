@@ -6,6 +6,7 @@ namespace OsuPracticeTools.Objects
     {
         public ScriptDiffsType ScriptDiffsType { get; set; } = ScriptDiffsType.Current;
         public int Interval { get; set; } = 30;
+        public int IntervalQuota { get; set; } = 0;
         public IntervalType IntervalType { get; set; } = IntervalType.HitObjects;
         public double SpeedRate { get; set; } = 1;
         public bool Pitch { get; set; } = false;

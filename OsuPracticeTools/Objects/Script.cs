@@ -36,6 +36,9 @@ namespace OsuPracticeTools.Objects
 
             switch (parts[0])
             {
+                case "reload":
+                    ScriptType = ScriptType.Reload;
+                    return;
                 case "adddiff":
                     ScriptType = ScriptType.AddDiff;
                     return;
@@ -183,12 +186,18 @@ namespace OsuPracticeTools.Objects
                         }
                         else
                         {
-                            if (param[^1] == 'm')
+                            var splitParam = param.Split('m');
+                            if (splitParam.Length == 2)
                             {
                                 _settings.IntervalType = IntervalType.Measures;
-                                param = param[0..^1];
+                                _settings.IntervalQuota = string.IsNullOrEmpty(splitParam[1]) ? 0 : int.Parse(splitParam[1]);
                             }
-                            _settings.Interval = int.Parse(param);
+
+                            var splitInterval = splitParam[0].Split('x');
+                            if (splitInterval.Length == 2)
+                                _settings.Interval = string.IsNullOrEmpty(splitInterval[1]) ? -1 : -int.Parse(splitInterval[1]);
+                            else
+                                _settings.Interval = string.IsNullOrEmpty(splitParam[0]) ? -1 : int.Parse(splitParam[0]);
                         }
                         break;
                     case "order":
@@ -203,7 +212,7 @@ namespace OsuPracticeTools.Objects
                         break;
                     case "next":
                         _settings.PracticeDiffSettings.EndTimeType = EndTimeType.NextDiff;
-                        _settings.PracticeDiffSettings.ExtendAmount = string.IsNullOrEmpty(param) ? 1 : int.Parse(param);
+                        _settings.PracticeDiffSettings.ExtendAmount = string.IsNullOrEmpty(param) ? 0 : int.Parse(param);
                         break;
                     case "spinner":
                         _settings.PracticeDiffSettings.ComboType = ComboType.Spinner;
@@ -316,6 +325,10 @@ namespace OsuPracticeTools.Objects
 
             switch (ScriptType)
             {
+                case ScriptType.Reload:
+                    Program.ReloadHotkeys(null, EventArgs.Empty);
+                    return (int)ScriptType.Reload;
+
                 case ScriptType.Set:
                     ScriptHelper.CopySettings(GlobalSettings, _settings);
                     return (int)ScriptType.Set;
@@ -376,7 +389,7 @@ namespace OsuPracticeTools.Objects
                     var times = diffTimes;
 
                     if (_settings.ScriptDiffsType == ScriptDiffsType.Interval)
-                        times = PracticeDiffExtensions.GetTimesFromInterval(_settings.Interval, ParsedBeatmap, _settings.IntervalType, osuStatus == 1 ? currentPlayTime : null);
+                        times = PracticeDiffExtensions.GetTimesFromInterval(_settings.Interval, ParsedBeatmap, _settings.IntervalType, osuStatus == 1 ? currentPlayTime : null, _settings.IntervalQuota);
 
                     if (!times.Any())
                         return -1;

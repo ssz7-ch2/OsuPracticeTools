@@ -130,7 +130,7 @@ namespace OsuPracticeTools.Objects
         {
             var comboEndTime = StartTime - _settings.GapDuration;
 
-            comboEndTime = _beatmap.TimingTickBefore(comboEndTime, 2);
+            comboEndTime = (int)_beatmap.TimingTickBefore(comboEndTime, 2);
 
             var colorOffset = 0;
             if (_beatmap.Colours.ComboColours.Any() && !_settings.CirclesComboColor)
@@ -175,7 +175,7 @@ namespace OsuPracticeTools.Objects
 
             var sliderDuration = _settings.SliderDuration;
 
-            var startTime = _beatmap.TimingTickBefore(endTime - sliderDuration, 1);
+            var startTime = (int)_beatmap.TimingTickBefore(endTime - sliderDuration, 1);
             sliderDuration = endTime - startTime;
 
             double length = 1;

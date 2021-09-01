@@ -12,6 +12,7 @@
         ClearMaps,
         CreateMap,
         CreateMaps,
-        Set
+        Set,
+        Reload
     }
 }

@@ -184,12 +184,11 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
             return null;
         }
 
-        public static int TimingTickBefore(this Beatmap beatmap, int time, double beatRate)
+        public static double TimingTickBefore(this Beatmap beatmap, int time, double beatRate)
         {
             var timingPoint = beatmap.UninheritedTimingPointAt(time);
             var adjustedBeatLength = timingPoint.BeatLength / beatRate;
-            return (int)(adjustedBeatLength *
-                Math.Floor(Math.Round((time - timingPoint.Time) / adjustedBeatLength, 2)) + timingPoint.Time);
+            return adjustedBeatLength * Math.Floor(Math.Round((time - timingPoint.Time) / adjustedBeatLength, 2)) + timingPoint.Time;
         }
 
         public static int ColorOffsetAt(this Beatmap beatmap, int comboColours, int time, bool ignoreComboOffset = false)

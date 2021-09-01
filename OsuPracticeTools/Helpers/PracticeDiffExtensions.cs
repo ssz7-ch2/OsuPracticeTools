@@ -1,4 +1,5 @@
 ﻿using OsuLightBeatmapParser;
+using OsuLightBeatmapParser.Objects;
 using OsuPracticeTools.Enums;
 using OsuPracticeTools.Helpers.BeatmapHelpers;
 using OsuPracticeTools.Objects;
@@ -66,7 +67,7 @@ namespace OsuPracticeTools.Helpers
             return diffs;
         }
 
-        public static List<int[]> GetTimesFromInterval(int interval, Beatmap beatmap, IntervalType intervalType, int? startTime)
+        public static List<int[]> GetTimesFromInterval(int interval, Beatmap beatmap, IntervalType intervalType, double? startTime, int objectQuota)
         {
             var times = new List<int[]>();
             var endTime = beatmap.HitObjects.Last().EndTime;
@@ -90,54 +91,70 @@ namespace OsuPracticeTools.Helpers
                         times.Add(new[] { beatmap.HitObjects[i].StartTime, endTime + 1 });
                     break;
                 case IntervalType.Measures:
-                    var lastHitObjectStart = beatmap.HitObjects.Last().StartTime;
-                    double currentTime = startTime ?? beatmap.TimingTickBefore(beatmap.HitObjects.First().StartTime, 1d / interval);
+                    var lastHitObject = beatmap.HitObjects.Last();
+                    var lastHitObjectStart = lastHitObject.StartTime;
 
                     var uninheritedTimingPoints = beatmap.TimingPoints.Where(t => t.Uninherited).GetEnumerator();
                     uninheritedTimingPoints.MoveNext();
+
                     var currentBeatLength = uninheritedTimingPoints.Current.BeatLength;
+                    var currentMeter = uninheritedTimingPoints.Current.Meter;
                     var nextTimingPoint = uninheritedTimingPoints.MoveNext() ? uninheritedTimingPoints.Current : null;
 
-                    int? prevHitObjectTime = null;
-                    var timeAdded = false;
 
-                    int time;
-                    while (currentTime <= lastHitObjectStart)
+                    startTime ??= beatmap.TimingTickBefore(beatmap.HitObjects.First().StartTime, 1d / (interval < 0 ? currentMeter * -interval : interval));
+                    double currentTime = (double)startTime;
+
+                    int time = (int)currentTime;
+                    var nextTime = GetNextTime(currentTime, ref currentBeatLength, ref currentMeter, interval, nextTimingPoint, uninheritedTimingPoints, out nextTimingPoint);
+                    var quotaFilled = 0;
+
+                    foreach (var hitObject in beatmap.HitObjects)
                     {
-                        time = (int)currentTime;
+                        if (hitObject.StartTime < startTime)
+                            continue;
 
-                        // only add time if it starts on different hit object
-                        var currentHitObjectTime = beatmap.HitObjectAtOrAfter(time).StartTime;
-                        if (currentHitObjectTime != prevHitObjectTime)
+                        if (hitObject.StartTime >= time && hitObject.StartTime < (int)nextTime)
                         {
+                            quotaFilled++;
+                            continue;
+                        }
+
+                        if (quotaFilled >= objectQuota || hitObject == lastHitObject)
+                        {
+                            time = (int)currentTime;
                             times.Add(new[] { time, endTime + 1 });
-                            prevHitObjectTime = currentHitObjectTime;
-                            timeAdded = true;
+
+                            currentTime = nextTime;
+                            nextTime = GetNextTime(currentTime, ref currentBeatLength, ref currentMeter, interval, nextTimingPoint, uninheritedTimingPoints, out nextTimingPoint);
+
+                            quotaFilled = 1;
                         }
                         else
-                            timeAdded = false;
-
-                        var adjustedCurrentTime = currentTime;
-                        while (nextTimingPoint != null && currentTime >= nextTimingPoint.Time)
                         {
-                            adjustedCurrentTime = nextTimingPoint.Time;
-                            if (currentTime != nextTimingPoint.Time && timeAdded)
-                            {
-                                times.RemoveAt(times.Count - 1);
-                                times.Add(new[] { (int)adjustedCurrentTime, endTime + 1 });
-                            }
-                            currentBeatLength = nextTimingPoint.BeatLength;
-                            nextTimingPoint = uninheritedTimingPoints.MoveNext() ? uninheritedTimingPoints.Current : null;
+                            nextTime = GetNextTime(nextTime, ref currentBeatLength, ref currentMeter, interval, nextTimingPoint, uninheritedTimingPoints, out nextTimingPoint);
+                            quotaFilled++;
                         }
-                        currentTime = adjustedCurrentTime;
-
-                        currentTime += currentBeatLength * interval;
                     }
 
                     break;
             }
             
             return times;
+        }
+
+        private static double GetNextTime(double currentTime, ref double currentBeatLength, ref int currentMeter, int interval, TimingPoint nextTimingPoint, IEnumerator<TimingPoint> uninheritedTimingPoints, out TimingPoint updatedNextTimingPoint)
+        {
+            var nextTime = currentTime + currentBeatLength * (interval < 0 ? currentMeter * -interval : interval);
+            updatedNextTimingPoint = nextTimingPoint;
+            if (nextTimingPoint != null && nextTime >= nextTimingPoint.Time)
+            {
+                nextTime = nextTimingPoint.Time;
+                currentBeatLength = nextTimingPoint.BeatLength;
+                currentMeter = nextTimingPoint.Meter;
+                updatedNextTimingPoint = uninheritedTimingPoints.MoveNext() ? uninheritedTimingPoints.Current : null;
+            }
+            return nextTime;
         }
     }
 }
