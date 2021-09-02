@@ -422,6 +422,9 @@ namespace OsuPracticeTools.Objects
                     File.Move(beatmapFile, Path.Combine(beatmapFolder, practiceDiff.FileName));
 
                     practiceDiff.Save(beatmapFolder, beatmapFolder, true);
+
+                    ParsedBeatmap = null;
+
                     return (int)ScriptType.UpdateDiff;
 
                 case ScriptType.UpdateEndDiff:
