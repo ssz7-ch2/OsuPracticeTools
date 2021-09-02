@@ -24,7 +24,7 @@ s + U: updatediff
 s + Y: updateenddiff
 s + S: creatediffs -spinner
 s + W: creatediffs -f "{v} {sc}-{ec}x"
-s + I: creatediffs -i x2m30 -spinner -f "{v} {sc}-{ec}x"
+s + I: creatediffs -i x2m30 -spinner
 
 c + s + R: reload
 
