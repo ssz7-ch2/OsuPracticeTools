@@ -201,7 +201,7 @@ namespace OsuPracticeTools.Objects
                             if (splitParam.Length == 2)
                             {
                                 _settings.IntervalType = IntervalType.Measures;
-                                _settings.IntervalQuota = string.IsNullOrEmpty(splitParam[1]) ? 0 : int.Parse(splitParam[1]);
+                                _settings.IntervalQuota = string.IsNullOrEmpty(splitParam[1]) ? 1 : int.Parse(splitParam[1]);
                             }
 
                             var splitInterval = splitParam[0].Split('x');
