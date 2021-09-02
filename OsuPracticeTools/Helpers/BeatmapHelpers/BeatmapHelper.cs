@@ -16,7 +16,7 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
         public static string GetOriginalBeatmap(string beatmapFile, string beatmapFolder)
         {
             var beatmap = BeatmapDecoder.DecodeRead(beatmapFile, new[] { FileSection.Metadata });
-            if (!beatmap.Metadata.Tags.Contains("osutrainer"))
+            if (!beatmap.Metadata.Tags.Contains("osutrainer") && !beatmap.Metadata.Tags.Contains("pdiffmaker") && !beatmap.Metadata.Tags.Contains("prTools"))
                 return beatmapFile;
 
             foreach (var file in Directory.GetFiles(beatmapFolder, "*.osu"))
@@ -25,7 +25,7 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
                     continue;
 
                 var originalBeatmap = BeatmapDecoder.DecodeRead(file, new[] { FileSection.Metadata });
-                if (!originalBeatmap.Metadata.Tags.Contains("osutrainer") && beatmap.Metadata.BeatmapID == originalBeatmap.Metadata.BeatmapID)
+                if (!originalBeatmap.Metadata.Tags.Contains("osutrainer") && !originalBeatmap.Metadata.Tags.Contains("pdiffmaker") && !originalBeatmap.Metadata.Tags.Contains("prTools") && beatmap.Metadata.BeatmapID == originalBeatmap.Metadata.BeatmapID)
                 {
                     if (beatmap.Metadata.BeatmapID != 0 || beatmap.Metadata.Version.Contains(originalBeatmap.Metadata.Version))
                         return file;

@@ -20,9 +20,11 @@ s + 0: createmaps -r 1.1 | createmaps -r 1.2 | createmaps -r 1.3 | createmaps -r
 
 s + A: adddiff
 s + Q: enddiff
+s + U: updatediff
+s + Y: updateenddiff
 s + S: creatediffs -spinner
 s + W: creatediffs -f "{v} {sc}-{ec}x"
-s + I: creatediffs -i x2m30 -spinner
+s + I: creatediffs -i x2m30 -spinner -f "{v} {sc}-{ec}x"
 
 c + s + R: reload
 

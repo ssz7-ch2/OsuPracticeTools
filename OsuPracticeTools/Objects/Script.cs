@@ -1,5 +1,7 @@
 ﻿using OsuLightBeatmapParser;
 using OsuLightBeatmapParser.Enums;
+using OsuLightBeatmapParser.Helpers;
+using OsuLightBeatmapParser.Objects;
 using OsuPracticeTools.Enums;
 using OsuPracticeTools.Helpers;
 using OsuPracticeTools.Helpers.BeatmapHelpers;
@@ -27,14 +29,17 @@ namespace OsuPracticeTools.Objects
         public Script(string script)
         {
             ScriptString = script;
+
             ParseSettings(script);
+            if (_settings != null)
+                _settings.ScriptString = script;
         }
 
         private void ParseSettings(string script, bool delayedParse = false)
         {
             var parts = script.Split(' ', 2, StringSplitOptions.TrimEntries);
 
-            switch (parts[0])
+            switch (parts[0].ToLower())
             {
                 case "reload":
                     ScriptType = ScriptType.Reload;
@@ -44,6 +49,12 @@ namespace OsuPracticeTools.Objects
                     return;
                 case "enddiff":
                     ScriptType = ScriptType.EndDiff;
+                    return;
+                case "updatediff":
+                    ScriptType = ScriptType.UpdateDiff;
+                    return;
+                case "updateenddiff":
+                    ScriptType = ScriptType.UpdateEndDiff;
                     return;
                 case "deldiff":
                     ScriptType = ScriptType.DeleteDiff;
@@ -263,10 +274,11 @@ namespace OsuPracticeTools.Objects
         {
             var requiredSections = new HashSet<FileSection>
             {
-                FileSection.Metadata
+                FileSection.Metadata,
+                FileSection.General
             };
 
-            if (ScriptType == ScriptType.CreateDiffs)
+            if (ScriptType is ScriptType.CreateDiffs or ScriptType.UpdateDiff)
             {
                 requiredSections.Add(FileSection.Events);
                 requiredSections.Add(FileSection.TimingPoints);
@@ -282,7 +294,6 @@ namespace OsuPracticeTools.Objects
 
                 if (_settings.SpeedRate != 1)
                 {
-                    requiredSections.Add(FileSection.General);
                     requiredSections.Add(FileSection.Editor);
                     requiredSections.Add(FileSection.Events);
                     requiredSections.Add(FileSection.TimingPoints);
@@ -303,9 +314,10 @@ namespace OsuPracticeTools.Objects
             
             var sections = Array.Empty<FileSection>();
 
-            if (ScriptType is ScriptType.CreateDiffs or ScriptType.CreateMap or ScriptType.CreateMaps)
+            if (ScriptType is ScriptType.CreateDiffs or ScriptType.CreateMap or ScriptType.CreateMaps or ScriptType.UpdateDiff or ScriptType.UpdateEndDiff)
             {
-                sections = GetRequiredCloneSections();
+                if (ScriptType != ScriptType.UpdateDiff && ScriptType != ScriptType.UpdateEndDiff)
+                    sections = GetRequiredCloneSections();
 
                 if (ParsedBeatmap is null && ScriptType != ScriptType.CreateMaps)
                 {
@@ -343,6 +355,109 @@ namespace OsuPracticeTools.Objects
                     else
                         return -1;
                     return (int)ScriptType.EndDiff;
+
+                case ScriptType.UpdateDiff:
+                    if (!ParsedBeatmap.Metadata.Tags.Contains("pdiffmaker"))
+                        return -1;
+                    var originalBeatmapFile = BeatmapHelper.GetOriginalBeatmap(beatmapFile, beatmapFolder);
+                    if (beatmapFile == originalBeatmapFile)
+                        return -1;
+
+                    var oldStartTime = ParsedBeatmap.General.StartTime;
+
+                    var originalBeatmap = BeatmapDecoder.Decode(originalBeatmapFile);
+                    originalBeatmap.General.Script = ParsedBeatmap.General.Script;
+                    PracticeDiffSettings settings;
+
+                    // try to figure out what settings were used
+                    if (string.IsNullOrEmpty(ParsedBeatmap.General.Script))
+                    {
+                        settings = new PracticeDiffSettings();
+
+                        // not really possible to get nameformat from version, so keep version the same
+                        settings.NameFormat = ParsedBeatmap.Metadata.Version;
+
+                        if (oldStartTime is null)
+                        {
+                            foreach (var hitObject in ParsedBeatmap.HitObjects)
+                            {
+                                if (ParsedBeatmap.TimingPointAt(hitObject.StartTime).Volume != 5)
+                                {
+                                    oldStartTime = hitObject.StartTime;
+                                    break;
+                                }
+                            }
+                        }
+
+                        var comboObjects = ParsedBeatmap.HitObjects.Where(h => h.StartTime < oldStartTime && h is not HitCircle).ToList();
+                        if (comboObjects.Count > 0)
+                        {
+                            settings.GapDuration = (int)oldStartTime - comboObjects.Last().EndTime;
+                            if (comboObjects.OfType<Slider>().Any())
+                            {
+                                var slider = comboObjects.First(h => h is Slider) as Slider;
+                                settings.ComboAmount = slider.Slides + 1;
+                                settings.ComboType = ComboType.Slider;
+                                settings.SliderDuration = slider.EndTime - slider.StartTime;
+                            }
+                            else
+                            {
+                                settings.ComboAmount = comboObjects.OfType<Spinner>().Count();
+                                settings.ComboType = ComboType.Spinner;
+                            }
+                        }
+                    }
+                    else
+                        settings = new Script(ParsedBeatmap.General.Script)._settings.PracticeDiffSettings;
+
+                    var practiceDiff = new PracticeDiff(originalBeatmap, currentPlayTime, ParsedBeatmap.HitObjects[^1].EndTime + 1);
+                    practiceDiff.ApplySettings(settings);
+                    practiceDiff.FormatName(settings.NameFormat);
+
+                    // unable to get some information, so keep version the same
+                    if (!settings.NameFormat.Contains("{s}") && !settings.NameFormat.Contains("{sc}"))
+                        practiceDiff.Name = ParsedBeatmap.Metadata.Version;
+
+                    // replace file
+                    File.Move(beatmapFile, Path.Combine(beatmapFolder, practiceDiff.FileName));
+
+                    practiceDiff.Save(beatmapFolder, beatmapFolder, true);
+                    return (int)ScriptType.UpdateDiff;
+
+                case ScriptType.UpdateEndDiff:
+                    if (!ParsedBeatmap.Metadata.Tags.Contains("pdiffmaker"))
+                        return -1;
+
+                    var oldEndTime = ParsedBeatmap.HitObjects[^1].EndTime;
+                    if (currentPlayTime == oldEndTime)
+                        return (int)ScriptType.UpdateEndDiff;
+
+                    if (currentPlayTime > oldEndTime)
+                    {
+                        originalBeatmapFile = BeatmapHelper.GetOriginalBeatmap(beatmapFile, beatmapFolder);
+                        if (beatmapFile == originalBeatmapFile)
+                            return -1;
+
+                        originalBeatmap = BeatmapDecoder.Decode(originalBeatmapFile);
+                        ParsedBeatmap.HitObjects.AddRange(originalBeatmap.HitObjects.Where(h => h.EndTime > oldEndTime && h.EndTime < currentPlayTime));
+                    }
+                    else
+                        ParsedBeatmap.HitObjects.RemoveAll(h => h.EndTime >= currentPlayTime);
+
+                    if (ParsedBeatmap.General.Script.Contains("{e}") || ParsedBeatmap.General.Script.Contains("{ec}"))
+                    {
+                        // have to create temp practice diff just to rename :(
+                        settings = new Script(ParsedBeatmap.General.Script)._settings.PracticeDiffSettings;
+                        practiceDiff = new PracticeDiff(ParsedBeatmap, ParsedBeatmap.General.StartTime ?? ParsedBeatmap.HitObjects[0].StartTime, currentPlayTime);
+                        practiceDiff.ApplySettings(settings);
+                        practiceDiff.FormatName(settings.NameFormat);
+
+                        ParsedBeatmap.Metadata.Version = practiceDiff.Name;
+                    }
+                    else
+                        ParsedBeatmap.Save(beatmapFolder);
+
+                    return (int)ScriptType.UpdateEndDiff;
 
                 case ScriptType.DeleteDiff:
                     if (diffTimes.Any())
@@ -394,12 +509,11 @@ namespace OsuPracticeTools.Objects
                     if (!times.Any())
                         return -1;
 
-                    var newBeatmap = ParsedBeatmap;
+                    var newBeatmap = ParsedBeatmap.Clone(sections);
+                    newBeatmap.General.Script = ScriptString;
 
                     if (_settings.HardRock || _settings.SpeedRate != 1 || _settings.FlipDirection != null || _settings.RemoveSpinners)
                     {
-                        newBeatmap = ParsedBeatmap.Clone(sections);
-
                         if (_settings.RemoveSpinners)
                             newBeatmap.RemoveSpinners();
 
@@ -474,6 +588,7 @@ namespace OsuPracticeTools.Objects
         private void Create(ScriptSettings settings, Beatmap originalBeatmap, string tempFolder, string beatmapFolder, FileSection[] sections)
         {
             var beatmap = originalBeatmap.Clone(sections);
+            beatmap.General.Script = settings.ScriptString;
 
             if (settings.RemoveSpinners)
                 beatmap.RemoveSpinners();

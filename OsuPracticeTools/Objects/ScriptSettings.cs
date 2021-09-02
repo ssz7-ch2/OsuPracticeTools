@@ -4,6 +4,7 @@ namespace OsuPracticeTools.Objects
 {
     public class ScriptSettings
     {
+        public string ScriptString { get; set; }
         public ScriptDiffsType ScriptDiffsType { get; set; } = ScriptDiffsType.Current;
         public int Interval { get; set; } = 30;
         public int IntervalQuota { get; set; } = 0;

@@ -4,6 +4,8 @@
     {
         AddDiff,
         EndDiff,
+        UpdateDiff,
+        UpdateEndDiff,
         DeleteDiff,
         ClearDiffs,
         CreateDiffs,

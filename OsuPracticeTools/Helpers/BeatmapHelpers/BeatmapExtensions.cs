@@ -269,7 +269,9 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
                 SamplesMatchPlaybackRate = beatmap.General.SamplesMatchPlaybackRate,
                 Length = beatmap.General.Length,
                 MaxCombo = beatmap.General.MaxCombo,
-                MainBPM = beatmap.General.MainBPM
+                MainBPM = beatmap.General.MainBPM,
+                StartTime = beatmap.General.StartTime,
+                Script = beatmap.General.Script
             };
         }
 

@@ -23,8 +23,13 @@ namespace OsuPracticeTools.Objects
         private int _endCombo;
         private int _endTime;
 
+        public string Name 
+        {
+            get => _beatmap.Metadata.Version; 
+            set => _beatmap.Metadata.Version = value;
+        }
+        public string FileName { get => _beatmap.FileName; }
         public int StartTime { get; set; }
-
         public int EndTime
         {
             get => _endTime;
@@ -74,11 +79,11 @@ namespace OsuPracticeTools.Objects
             _beatmap.HitObjects = newHitObjectsSection;
         }
 
-        public void FormatName(List<PracticeDiff> diffs, double speedRate = 1)
+        public void FormatName(string nameFormat, double speedRate = 1, int totalDiffs = 0)
         {
             const string timeFormat = @"m\:ss";
             var regex = new Regex(@"{([a-zA-Z]+)}");
-            _beatmap.Metadata.Version = regex.Replace(_settings.NameFormat, m =>
+            _beatmap.Metadata.Version = regex.Replace(nameFormat, m =>
             {
                 switch (m.Groups[1].Value)
                 {
@@ -87,7 +92,7 @@ namespace OsuPracticeTools.Objects
                     case "i":
                         return Index.ToString();
                     case "n":
-                        return diffs.Count.ToString();
+                        return totalDiffs.ToString();
                     case "R":
                         return Math.Abs(speedRate - 1) < 0.001 ? "" : $" {speedRate:0.###}x";
                     case "s":
@@ -128,6 +133,9 @@ namespace OsuPracticeTools.Objects
 
         private List<HitObject> GenerateCombo()
         {
+            if (ComboType == ComboType.None)
+                return new List<HitObject>();
+
             var comboEndTime = StartTime - _settings.GapDuration;
 
             comboEndTime = (int)_beatmap.TimingTickBefore(comboEndTime, 2);
@@ -286,7 +294,7 @@ namespace OsuPracticeTools.Objects
             return hitObjects;
         }
 
-        public void GenerateSoftTimingPoint(int time, double beatLength = -100)
+        public void GenerateTimingPointAtStart()
         {
             var timingPointAtStart = _beatmap.TimingPointAt(StartTime);
             if (timingPointAtStart.Time != StartTime)
@@ -307,6 +315,11 @@ namespace OsuPracticeTools.Objects
 
                 _beatmap.TimingPoints.Insert(_beatmap.TimingPoints.IndexOf(timingPointAtStart) + 1, newTimingPoint);
             }
+        }
+
+        public void GenerateSoftTimingPoint(int time, double beatLength = -100)
+        {
+            GenerateTimingPointAtStart();
 
             var currentTimingPoint = _beatmap.TimingPointAt(time);
 
@@ -444,10 +457,10 @@ namespace OsuPracticeTools.Objects
             if (_startCombo == 0) ComboType = ComboType.None;
             else if (_startCombo == 1) ComboType = ComboType.Spinner;
 
-            Combo = Math.Clamp(_startCombo, (int)ComboType, 200);
+            Combo = Math.Clamp(_settings.ComboAmount ?? _startCombo, (int)ComboType, 200);
         }
 
-        public void Save(string tempFolder, string beatmapFolder)
+        public void Save(string tempFolder, string beatmapFolder, bool overwrite = false)
         {
             CloneBeatmap();
 
@@ -457,7 +470,10 @@ namespace OsuPracticeTools.Objects
 
             _beatmap.HitObjects.InsertRange(0, combo);
 
-            _beatmap.Save(tempFolder, beatmapFolder, false, true);
+            _beatmap.Metadata.Tags.Add("pdiffmaker");
+            _beatmap.General.StartTime = StartTime;
+
+            _beatmap.Save(tempFolder, beatmapFolder, overwrite, true);
         }
     }
 }

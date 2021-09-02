@@ -278,7 +278,7 @@ namespace OsuPracticeTools
                     Parallel.ForEach(KeyScriptDictionary[multiKey], script =>
                     {
                         int scriptType;
-                        if (script.ScriptType == ScriptType.CreateDiffs)
+                        if (script.ScriptType <= ScriptType.CreateDiffs)
                             scriptType = script.Run(originalBeatmapFile, beatmapFolder, Diffs, BeatmapFiles, currentTime, osuStatus);
                         else
                             scriptType = script.Run(beatmapFile, beatmapFolder, Diffs, BeatmapFiles, currentTime);
@@ -308,7 +308,7 @@ namespace OsuPracticeTools
 
                 DeleteFiles();
 
-                if (scriptTypes.Any(s => s is (int)ScriptType.CreateDiffs or (int)ScriptType.CreateMap or (int)ScriptType.CreateMaps))
+                if (scriptTypes.Any(s => s is (int)ScriptType.CreateDiffs or (int)ScriptType.CreateMap or (int)ScriptType.CreateMaps or (int)ScriptType.UpdateDiff or (int)ScriptType.UpdateEndDiff))
                 {
                     ScriptFinish.Play();
                 }
@@ -326,34 +326,50 @@ namespace OsuPracticeTools
 
         private static void OnGlobalKeyUp(object sender, List<Keys> keys)
         {
-            keys = KeyScriptDictionary.Keys.FirstOrDefault(keys.SequenceEqual);
-            if (keys is null) return;
-            ScriptStart.Play();
-
-            if (!GetCurrentBeatmapInfo(_songsFolder, out var currentOsuFile, out var originalBeatmapFile, out var beatmapFile, out var beatmapFolder))
-                return;
-
-            if (currentOsuFile != _prevOsuFile)
+            try
             {
-                _sameMapDuration = 0;
-                Script.ParsedBeatmap = null;
-                Diffs.Clear();
+                keys = KeyScriptDictionary.Keys.FirstOrDefault(keys.SequenceEqual);
+                if (keys is null) return;
+                ScriptStart.Play();
+
+                if (!GetCurrentBeatmapInfo(_songsFolder, out var currentOsuFile, out var originalBeatmapFile, out var beatmapFile, out var beatmapFolder))
+                    return;
+
+                if (currentOsuFile != _prevOsuFile)
+                {
+                    _sameMapDuration = 0;
+                    Script.ParsedBeatmap = null;
+                    Diffs.Clear();
+                }
+
+                RunScripts(keys, originalBeatmapFile, beatmapFile, beatmapFolder);
+
+                _prevOsuFile = currentOsuFile;
             }
-
-            RunScripts(keys, originalBeatmapFile, beatmapFile, beatmapFolder);
-
-            _prevOsuFile = currentOsuFile;
+            catch (Exception ex)
+            {
+                ScriptError.Play();
+                Logger.LogError(ex);
+            }
         }
 
         private static void OnGlobalKeyDown(object sender, List<Keys> keys)
         {
-            if (!GetCurrentBeatmapInfo(_songsFolder, out _, out _, out var beatmapFile, out _))
-                return;
+            try
+            {
+                if (!GetCurrentBeatmapInfo(_songsFolder, out _, out _, out var beatmapFile, out _))
+                    return;
 
-            if (keys.SequenceEqual(ResetGlobalKey))
-                ScriptStart.Play();
+                if (keys.SequenceEqual(ResetGlobalKey))
+                    ScriptStart.Play();
 
-            ScriptHelper.SetGlobalSettings(keys, beatmapFile, StatKeys, RateKey, ResetGlobalKey);
+                ScriptHelper.SetGlobalSettings(keys, beatmapFile, StatKeys, RateKey, ResetGlobalKey);
+            }
+            catch (Exception ex)
+            {
+                ScriptError.Play();
+                Logger.LogError(ex);
+            }
         }
 
         private static bool GetCurrentBeatmapInfo(string songsFolder, out string currentOsuFile, out string originalBeatmapFile, out string beatmapFile, out string beatmapFolder)

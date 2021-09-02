@@ -35,7 +35,7 @@ namespace OsuPracticeTools.Helpers
             foreach (var (diff, index) in reorder.Select((value, index) => (value, index)))
             {
                 diff.Index = index + 1;
-                diff.FormatName(diffs, speedRate);
+                diff.FormatName(settings.NameFormat, speedRate, diffs.Count);
             }
         }
 
