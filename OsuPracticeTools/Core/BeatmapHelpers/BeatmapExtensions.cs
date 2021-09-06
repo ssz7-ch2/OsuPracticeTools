@@ -3,6 +3,7 @@ using OsuLightBeatmapParser.Enums;
 using OsuLightBeatmapParser.Helpers;
 using OsuLightBeatmapParser.Objects;
 using OsuLightBeatmapParser.Sections;
+using OsuPracticeTools.Core.Scripts;
 using OsuPracticeTools.Enums;
 using System;
 using System.IO;
@@ -10,7 +11,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
 
-namespace OsuPracticeTools.Helpers.BeatmapHelpers
+namespace OsuPracticeTools.Core.BeatmapHelpers
 {
     internal static class BeatmapExtensions
     {
@@ -30,7 +31,6 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
             }
             catch (IOException)
             {
-                // don't create the same beatmap
             }
         }
 
@@ -48,7 +48,7 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
             }
         }
 
-        public static void FormatName(this Beatmap beatmap, Beatmap originalBeatmap, string format = "{v}{R}{BPM}{CS}{AR}{OD}{HP}", double speedRate = 1)
+        public static void FormatName(this Beatmap beatmap, Beatmap originalBeatmap, ScriptSettings settings, string format = "{v}{R}{BPM}{CS}{AR}{OD}{HP}")
         {
             const string timeFormat = @"m\:ss";
             var regex = new Regex(@"{([a-zA-Z]+)}");
@@ -59,7 +59,7 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
                     case "v":
                         return originalBeatmap.Metadata.Version;
                     case "R":
-                        return Math.Abs(speedRate - 1) < 0.001 ? "" : $" {speedRate:0.###}x";
+                        return Math.Abs(settings.SpeedRate - 1) < 0.001 ? "" : $" {settings.SpeedRate:0.###}x";
                     case "l":
                         return TimeSpan.FromMilliseconds(originalBeatmap.General.Length).ToString(timeFormat);
                     case "mc":
@@ -73,11 +73,59 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
                     case "HP":
                         return (Math.Abs(beatmap.Difficulty.HPDrainRate - originalBeatmap.Difficulty.HPDrainRate) < 0.001) ? "" : $" HP{beatmap.Difficulty.HPDrainRate:0.##}";
                     case "BPM":
-                        return Math.Abs(speedRate - 1) < 0.001 ? "" : $" ({Convert.ToInt32(beatmap.General.MainBPM)}bpm)";
+                        return Math.Abs(settings.SpeedRate - 1) < 0.001 ? "" : $" ({Convert.ToInt32(beatmap.General.MainBPM)}bpm)";
+                    case "HR":
+                        return settings.HardRock ? " HR" : "";
+                    case "FLIP":
+                        return settings.FlipDirection == null ? "" : $" Flip{settings.FlipDirection.ToString()[0]}";
+                    case "RS":
+                        return settings.RemoveSpinners ? " No Spinners" : "";
+
                     default:
                         return $"{{{m.Groups[1].Value}}}";
                 }
             }).Trim();
+        }
+
+        public static void CreateModifiedMap(this Beatmap originalBeatmap, ScriptSettings settings, string tempFolder, string beatmapFolder, FileSection[] sections) => originalBeatmap
+            .ModifyMap(settings, tempFolder, beatmapFolder, sections)
+            .Save(tempFolder, beatmapFolder, settings.Overwrite, true);
+
+
+        public static Beatmap ModifyMap(this Beatmap originalBeatmap, ScriptSettings settings, string tempFolder, string beatmapFolder, FileSection[] sections)
+        {
+            var beatmap = originalBeatmap.Clone(sections);
+            beatmap.General.Script = settings.ScriptString;
+
+            if (settings.RemoveSpinners)
+                beatmap.RemoveSpinners();
+
+            if (settings.HardRock)
+                beatmap.ApplyHR();
+
+            if (settings.FlipDirection != null)
+                beatmap.ApplyFlip((FlipDirection)settings.FlipDirection);
+
+            if (settings.BPM != null)
+                settings.SpeedRate = originalBeatmap.BPMToSpeedRate((double)settings.BPM);
+
+            if (settings.SpeedRate != 1)
+            {
+                beatmap.ChangeSpeedRate(settings.SpeedRate, settings.Pitch, tempFolder, beatmapFolder);
+                beatmap.Metadata.Tags.Add(GlobalConstants.MODIFIED_MAP_TAG);
+            }
+
+            var modifiedBeatmap = beatmap;
+            if (settings.DifficultyModified)
+            {
+                modifiedBeatmap = beatmap.Clone(new[] { FileSection.Difficulty });
+                modifiedBeatmap.ModifyDifficulty(settings.CS, settings.AR, settings.OD, settings.HP,
+                    settings.MinCS, settings.MaxCS, settings.MinAR, settings.MaxAR, settings.MinOD, settings.MaxOD);
+            }
+
+            modifiedBeatmap.FormatName(beatmap, settings, settings.NameFormat);
+
+            return modifiedBeatmap;
         }
 
         public static void ModifyDifficulty(this Beatmap beatmap, float? cs = null, float? ar = null, float? od = null, float? hp = null,
@@ -128,10 +176,10 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
 
         public static void RemoveSpinners(this Beatmap beatmap) => beatmap.HitObjects.RemoveAll(h => h is Spinner);
 
-        public static void ChangeSpeedRate(this Beatmap beatmap, string tempFolder, string beatmapFolder, double rate, bool pitch)
+        public static void ChangeSpeedRate(this Beatmap beatmap, double rate, bool pitch = false, string tempFolder = null, string beatmapFolder = null)
         {
             var newAudioFile = $"{Path.GetFileNameWithoutExtension(beatmap.General.AudioFilename)} {rate:0.000}x.mp3";
-            if (!File.Exists(Path.Combine(beatmapFolder, newAudioFile)))
+            if (tempFolder != null && beatmapFolder != null && !File.Exists(Path.Combine(beatmapFolder, newAudioFile)))
             {
                 if (Path.Combine(new DirectoryInfo(tempFolder).FullName, newAudioFile).Length > 260)
                     newAudioFile = $"audio {rate:0.000}x.mp3";
@@ -169,6 +217,15 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
                 hitObject.StartTime = (int)(hitObject.StartTime / rate);
                 hitObject.EndTime = (int)(hitObject.EndTime / rate);
             }
+        }
+
+        public static double BPMToSpeedRate(this Beatmap beatmap, double bpm)
+        {
+            var speedRate = bpm / beatmap.General.MainBPM;
+            if (Math.Abs(speedRate - 1) < 0.001 || speedRate is < 0.1d or > 5d)
+                speedRate = 1;
+
+            return speedRate;
         }
 
         public static HitObject HitObjectAtOrAfter(this Beatmap beatmap, int time) => beatmap.HitObjects.FirstOrDefault(t => t.StartTime >= time);
@@ -247,6 +304,14 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
             return newBeatmap;
         }
 
+        public static void CopyGeneralSectionExtra(this Beatmap beatmap, Beatmap copyFrom)
+        {
+            beatmap.General.Index = copyFrom.General.Index;
+            beatmap.General.Total = copyFrom.General.Total;
+            beatmap.General.StartTime = copyFrom.General.StartTime;
+            beatmap.General.Script = copyFrom.General.Script;
+        }
+
         public static GeneralSection CloneGeneralSection(this Beatmap beatmap)
         {
             return new()
@@ -270,6 +335,8 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
                 Length = beatmap.General.Length,
                 MaxCombo = beatmap.General.MaxCombo,
                 MainBPM = beatmap.General.MainBPM,
+                Index = beatmap.General.Index,
+                Total = beatmap.General.Total,
                 StartTime = beatmap.General.StartTime,
                 Script = beatmap.General.Script
             };
@@ -298,7 +365,7 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
                 Creator = beatmap.Metadata.Creator,
                 Version = beatmap.Metadata.Version,
                 Source = beatmap.Metadata.Source,
-                Tags = beatmap.Metadata.Tags,
+                Tags = beatmap.Metadata.Tags.ToHashSet(),
                 BeatmapID = beatmap.Metadata.BeatmapID,
                 BeatmapSetID = beatmap.Metadata.BeatmapSetID
             };

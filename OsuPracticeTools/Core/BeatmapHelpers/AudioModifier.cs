@@ -6,7 +6,7 @@ using Un4seen.Bass.AddOn.Enc;
 using Un4seen.Bass.AddOn.Fx;
 using Un4seen.Bass.Misc;
 
-namespace OsuPracticeTools.Helpers.BeatmapHelpers
+namespace OsuPracticeTools.Core.BeatmapHelpers
 {
     public static class AudioModifier
     {
@@ -108,6 +108,7 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
             {
             }
         }
+
         // outFile is final destination, tempFile is temporary destination for zipping into .osz file
         public static void ChangeAudioRate(string inFile, string outFile, double rate, bool changePitch = false)
         {

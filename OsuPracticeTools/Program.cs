@@ -1,8 +1,12 @@
 ﻿using OsuMemoryDataProvider;
-using OsuPracticeTools.Enums;
+using OsuPracticeTools.Core;
+using OsuPracticeTools.Core.BeatmapHelpers;
+using OsuPracticeTools.Core.GlobalSettings;
+using OsuPracticeTools.Core.Scripts;
+using OsuPracticeTools.Core.Scripts.BeatmapScripts;
+using OsuPracticeTools.Core.Scripts.Helpers;
+using OsuPracticeTools.Core.Scripts.PracticeDiffScripts;
 using OsuPracticeTools.Helpers;
-using OsuPracticeTools.Helpers.BeatmapHelpers;
-using OsuPracticeTools.Objects;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,19 +27,16 @@ namespace OsuPracticeTools
         private static IOsuMemoryReader _osuReader;
         private static string _songsFolder;
         private static bool _prevGameState;
-        private static string _prevOsuFile;
         private static bool _gameRunning;
         private static Timer _timer;
-        private static double _sameMapDuration; // in minutes
-        private static double _lastMapAddedDuration;
         private static bool _hotkeysLoaded;
         private static Mutex _mutex;
-        private static readonly List<int[]> Diffs = new();
-        private static readonly Dictionary<string, HashSet<ScriptSettings>> BeatmapFiles = new();
+
         private static readonly Dictionary<List<Keys>, List<Script>> KeyScriptDictionary = new();
         private static readonly SoundPlayer ScriptStart = new("Resources/scriptStart.wav");
         private static readonly SoundPlayer ScriptFinish = new("Resources/scriptFinish.wav");
         private static readonly SoundPlayer ScriptError = new("Resources/scriptError.wav");
+
         internal static Keys[] StatKeys = { Keys.Z, Keys.X, Keys.C, Keys.V };
         internal static Keys RateKey = Keys.R;
         internal static List<Keys> ResetGlobalKey = new() { Keys.Back | Keys.Shift };
@@ -59,7 +60,7 @@ namespace OsuPracticeTools
             _timer.Tick += CheckGameRunning;
             _timer.Start();
 
-            InitialCheckGameRunning();
+            CheckGameRunning(0);
 
             Application.Run(new SystemTray());
         }
@@ -80,39 +81,22 @@ namespace OsuPracticeTools
             ScriptError.Dispose();
         }
 
-        private static void CheckGameRunning(object sender, EventArgs e)
+        private static void CheckGameRunning(object sender, EventArgs e) => CheckGameRunning(_timer.Interval);
+
+        private static void CheckGameRunning(int timeElapsed)
         {
             var processes = Process.GetProcessesByName("osu!");
 
             if (processes.Length == 0)
             {
                 _gameRunning = false;
-                GameNotRunning(_timer.Interval);
+                GameNotRunning(timeElapsed);
             }
             else
             {
                 _gameRunning = true;
                 OsuProcess = processes[0];
-                GameRunning(_timer.Interval);
-            }
-
-            _prevGameState = _gameRunning;
-        }
-
-        private static void InitialCheckGameRunning()
-        {
-            var processes = Process.GetProcessesByName("osu!");
-
-            if (processes.Length == 0)
-            {
-                _gameRunning = false;
-                GameNotRunning(0);
-            }
-            else
-            {
-                _gameRunning = true;
-                OsuProcess = processes[0];
-                GameRunning(0);
+                GameRunning(timeElapsed);
             }
 
             _prevGameState = _gameRunning;
@@ -123,12 +107,13 @@ namespace OsuPracticeTools
             if (_prevGameState != _gameRunning)
             {
                 Logger.LogMessage("Game closed, unloading hotkeys");
+
                 Bass.BASS_Free();
+
                 GlobalKeyboardHook.Unhook();
                 UnloadHotkeys();
-                Script.ParsedBeatmap = null;
-                _prevOsuFile = null;
-                Diffs.Clear();
+
+                Info.Clear();
             }
         }
 
@@ -143,40 +128,10 @@ namespace OsuPracticeTools
 
             if (string.IsNullOrEmpty(_songsFolder) && OsuProcess != null)
                 GetSongsFolder();
-            
 
-            var currentOsuFile = _osuReader.GetOsuFileName();
+            Info.Update(timeElapsed, _osuReader.GetOsuFileName());
 
-            UpdateVariables(currentOsuFile, timeElapsed);
-
-            _prevOsuFile = currentOsuFile;
-        }
-
-        private static void UpdateVariables(string currentOsuFile, int timeElapsed)
-        {
-            _lastMapAddedDuration += timeElapsed / 60000d;
-            if (_lastMapAddedDuration >= 10)
-            {
-                _lastMapAddedDuration = 0;
-                BeatmapFiles.Clear();
-            }
-
-            if (currentOsuFile == _prevOsuFile)
-            {
-                _sameMapDuration += timeElapsed / 60000d;
-                if (_sameMapDuration >= 10)
-                {
-                    _sameMapDuration = 0;
-                    Script.ParsedBeatmap = null;
-                    Diffs.Clear();
-                }
-            }
-            else
-            {
-                _sameMapDuration = 0;
-                Script.ParsedBeatmap = null;
-                Diffs.Clear();
-            }
+            Info.PreviousOsuFile = Info.CurrentOsuFile;
         }
 
         private static void GetSongsFolder()
@@ -225,7 +180,7 @@ namespace OsuPracticeTools
         {
             if (!_hotkeysLoaded)
             {
-                ScriptHelper.ParseScripts(KeyScriptDictionary);
+                ScriptParser.ParseScripts(KeyScriptDictionary);
                 GlobalKeyboardHook.HookedUpKeys.AddRange(KeyScriptDictionary.Keys);
 
                 LoadExtraHotkeys();
@@ -260,10 +215,12 @@ namespace OsuPracticeTools
             }
         }
 
-        private static async void RunScripts(List<Keys> multiKey, string originalBeatmapFile, string beatmapFile, string beatmapFolder)
+        private static async void RunScripts(List<Keys> multiKey)
         {
-            var currentTime = _osuReader.ReadPlayTime();
-            _osuReader.GetCurrentStatus(out int osuStatus);
+            Info.CurrentPlayTime = _osuReader.ReadPlayTime();
+
+            _osuReader.GetCurrentStatus(out var osuStatus);
+            Info.CurrentOsuStatus = osuStatus;
 
             try
             {
@@ -272,47 +229,46 @@ namespace OsuPracticeTools
 
 
                 var messages = new List<string>();
-                var scriptTypes = new List<int>();
+
+                var playFinish = false;
+                var playError = false;
+
+                var playFinishTypes = new[]
+                {
+                    typeof(CreateMapScript), typeof(CreateMapsScript), typeof(CreateDiffsScript),
+                    typeof(UpdateDiffScript), typeof(UpdateDiffEndScript)
+                };
 
                 await Task.Factory.StartNew(() => {
                     Parallel.ForEach(KeyScriptDictionary[multiKey], script =>
                     {
-                        int scriptType;
-                        if (script.ScriptType <= ScriptType.CreateDiffs)
-                            scriptType = script.Run(originalBeatmapFile, beatmapFolder, Diffs, BeatmapFiles, currentTime, osuStatus);
-                        else
-                            scriptType = script.Run(beatmapFile, beatmapFolder, Diffs, BeatmapFiles, currentTime);
+                        var result = script.Run();
 
-                        scriptTypes.Add(scriptType);
-
-                        if (scriptType < 0)
+                        if (result is null)
+                        {
                             messages.Add($"Failed to run script {script.ScriptString}");
+                            playError = true;
+                        }
 
-                        if (scriptType is (int)ScriptType.AddDiff or (int)ScriptType.CreateDiffs)
-                            _sameMapDuration = 0;
-
-                        if (scriptType is (int)ScriptType.AddMap or (int)ScriptType.CreateMaps)
-                            _lastMapAddedDuration = 0;
-
+                        if (playFinishTypes.Contains(result))
+                            playFinish = true;
                     });
                 });
 
-                foreach (var message in messages)
-                    Logger.LogMessage(message);
+                Logger.LogMessage(string.Join('\n', messages));
 
-
-                var outputOsz = new DirectoryInfo(beatmapFolder).Name + ".osz";
-                BeatmapHelper.LoadBeatmapWithOsz(GlobalConstants.BEATMAP_TEMP, outputOsz, beatmapFolder);
+                var outputOsz = new DirectoryInfo(Info.BeatmapFolder).Name + ".osz";
+                BeatmapHelper.LoadBeatmapWithOsz(GlobalConstants.BEATMAP_TEMP, outputOsz, Info.BeatmapFolder);
                 BeatmapHelper.LoadBeatmapsWithOsz(GlobalConstants.BEATMAPS_TEMP, _songsFolder);
 
 
                 DeleteFiles();
 
-                if (scriptTypes.Any(s => s is (int)ScriptType.CreateDiffs or (int)ScriptType.CreateMap or (int)ScriptType.CreateMaps or (int)ScriptType.UpdateDiff or (int)ScriptType.UpdateEndDiff))
+                if (playFinish)
                 {
                     ScriptFinish.Play();
                 }
-                else if (scriptTypes.All(s => s < 0))
+                else if (playError)
                 {
                     ScriptError.Play();
                 }
@@ -330,21 +286,15 @@ namespace OsuPracticeTools
             {
                 keys = KeyScriptDictionary.Keys.FirstOrDefault(keys.SequenceEqual);
                 if (keys is null) return;
+
                 ScriptStart.Play();
 
-                if (!GetCurrentBeatmapInfo(_songsFolder, out var currentOsuFile, out var originalBeatmapFile, out var beatmapFile, out var beatmapFolder))
+                if (!GetCurrentBeatmapInfo())
                     return;
 
-                if (currentOsuFile != _prevOsuFile)
-                {
-                    _sameMapDuration = 0;
-                    Script.ParsedBeatmap = null;
-                    Diffs.Clear();
-                }
+                RunScripts(keys);
 
-                RunScripts(keys, originalBeatmapFile, beatmapFile, beatmapFolder);
-
-                _prevOsuFile = currentOsuFile;
+                Info.PreviousOsuFile = Info.CurrentOsuFile;
             }
             catch (Exception ex)
             {
@@ -357,13 +307,15 @@ namespace OsuPracticeTools
         {
             try
             {
-                if (!GetCurrentBeatmapInfo(_songsFolder, out _, out _, out var beatmapFile, out _))
+                if (!GetCurrentBeatmapInfo())
                     return;
 
                 if (keys.SequenceEqual(ResetGlobalKey))
                     ScriptStart.Play();
 
-                ScriptHelper.SetGlobalSettings(keys, beatmapFile, StatKeys, RateKey, ResetGlobalKey);
+                GlobalSettingsHelper.SetGlobalSettings(keys, StatKeys, RateKey, ResetGlobalKey);
+
+                Info.PreviousOsuFile = Info.CurrentOsuFile;
             }
             catch (Exception ex)
             {
@@ -372,24 +324,25 @@ namespace OsuPracticeTools
             }
         }
 
-        private static bool GetCurrentBeatmapInfo(string songsFolder, out string currentOsuFile, out string originalBeatmapFile, out string beatmapFile, out string beatmapFolder)
+        private static bool GetCurrentBeatmapInfo()
         {
-            currentOsuFile = _osuReader.GetOsuFileName();
+            Info.Update(0, _osuReader.GetOsuFileName());
+
             var mapFolder = _osuReader.GetMapFolderName();
 
-            if (string.IsNullOrEmpty(currentOsuFile) || string.IsNullOrEmpty(mapFolder))
+            if (string.IsNullOrEmpty(Info.CurrentOsuFile) || string.IsNullOrEmpty(mapFolder))
             {
                 ScriptError.Play();
                 Logger.LogMessage("Error: couldn't get current osu file.");
-                beatmapFile = null;
-                beatmapFolder = null;
-                originalBeatmapFile = null;
+                Info.BeatmapFile = null;
+                Info.BeatmapFolder = null;
+                Info.CurrentBeatmapFile = null;
                 return false;
             }
 
-            beatmapFolder = Path.Combine(songsFolder, mapFolder);
-            originalBeatmapFile = Path.Combine(beatmapFolder, currentOsuFile);
-            beatmapFile = BeatmapHelper.GetOriginalBeatmap(originalBeatmapFile, beatmapFolder);
+            Info.BeatmapFolder = Path.Combine(_songsFolder, mapFolder);
+            Info.CurrentBeatmapFile = Path.Combine(Info.BeatmapFolder, Info.CurrentOsuFile);
+            Info.BeatmapFile = BeatmapHelper.GetOriginalBeatmap(Info.CurrentBeatmapFile, Info.BeatmapFolder, GlobalConstants.BEATMAP_TAGS);
             return true;
         }
 

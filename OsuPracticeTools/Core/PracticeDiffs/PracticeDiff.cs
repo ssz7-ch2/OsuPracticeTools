@@ -3,15 +3,15 @@ using OsuLightBeatmapParser.Enums;
 using OsuLightBeatmapParser.Helpers;
 using OsuLightBeatmapParser.Objects;
 using OsuLightBeatmapParser.Sections;
+using OsuPracticeTools.Core.BeatmapHelpers;
 using OsuPracticeTools.Enums;
-using OsuPracticeTools.Helpers.BeatmapHelpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
 
-namespace OsuPracticeTools.Objects
+namespace OsuPracticeTools.Core.PracticeDiffs
 {
     public class PracticeDiff
     {
@@ -23,12 +23,11 @@ namespace OsuPracticeTools.Objects
         private int _endCombo;
         private int _endTime;
 
-        public string Name 
+        public string Name
         {
-            get => _beatmap.Metadata.Version; 
+            get => _beatmap.Metadata.Version;
             set => _beatmap.Metadata.Version = value;
         }
-        public string FileName { get => _beatmap.FileName; }
         public int StartTime { get; set; }
         public int EndTime
         {
@@ -45,7 +44,8 @@ namespace OsuPracticeTools.Objects
 
         public int Combo { get; set; }
         public ComboType ComboType { get; set; }
-        public int Index { get; set; }
+        public int? Index { get; set; }
+        public int? Total { get; set; }
         public PracticeDiff(Beatmap beatmap, int startTime, int endTime)
         {
             _originalBeatmap = beatmap;
@@ -56,12 +56,15 @@ namespace OsuPracticeTools.Objects
             _startCombo = beatmap.ComboAt(startTime);
 
             EndTime = endTime;
+
+            Index = beatmap.General.Index;
+            Total = beatmap.General.Total;
         }
 
         private static Beatmap InitialClone(Beatmap beatmap)
         {
-            // clone difficulty and metadata for sake of name formatting
-            return beatmap.Clone(new[] {FileSection.Metadata, FileSection.Difficulty});
+            // clone metadata for sake of name formatting
+            return beatmap.Clone(new[] { FileSection.Metadata });
         }
 
         private void CloneBeatmap()
@@ -79,56 +82,32 @@ namespace OsuPracticeTools.Objects
             _beatmap.HitObjects = newHitObjectsSection;
         }
 
-        public void FormatName(string nameFormat, double speedRate = 1, int totalDiffs = 0)
+        public void FormatName()
         {
             const string timeFormat = @"m\:ss";
             var regex = new Regex(@"{([a-zA-Z]+)}");
-            _beatmap.Metadata.Version = regex.Replace(nameFormat, m =>
+            _beatmap.Metadata.Version = regex.Replace(_beatmap.Metadata.Version, m =>
             {
                 switch (m.Groups[1].Value)
                 {
-                    case "v":
-                        return _originalBeatmap.Metadata.Version;
                     case "i":
                         return Index.ToString();
                     case "n":
-                        return totalDiffs.ToString();
-                    case "R":
-                        return Math.Abs(speedRate - 1) < 0.001 ? "" : $" {speedRate:0.###}x";
+                        return Total.ToString();
                     case "s":
                         return TimeSpan.FromMilliseconds(StartTime).ToString(timeFormat);
                     case "e":
                         return TimeSpan.FromMilliseconds(EndTime).ToString(timeFormat);
-                    case "l":
-                        return TimeSpan.FromMilliseconds(_originalBeatmap.General.Length).ToString(timeFormat);
                     case "c":
                         return Combo.ToString();
                     case "sc":
                         return _startCombo.ToString();
                     case "ec":
                         return _endCombo.ToString();
-                    case "mc":
-                        return _originalBeatmap.General.MaxCombo.ToString();
-                    case "CS":
-                        return Math.Abs(_beatmap.Difficulty.CircleSize - _originalBeatmap.Difficulty.CircleSize) < 0.001 ? "" : $" CS{_beatmap.Difficulty.CircleSize:0.##}";
-                    case "AR":
-                        return Math.Abs(_beatmap.Difficulty.ApproachRate - _originalBeatmap.Difficulty.ApproachRate) < 0.001 ? "" : $" AR{_beatmap.Difficulty.ApproachRate:0.##}";
-                    case "OD":
-                        return Math.Abs(_beatmap.Difficulty.OverallDifficulty - _originalBeatmap.Difficulty.OverallDifficulty) < 0.001 ? "" : $" OD{_beatmap.Difficulty.OverallDifficulty:0.##}";
-                    case "HP":
-                        return Math.Abs(_beatmap.Difficulty.HPDrainRate - _originalBeatmap.Difficulty.HPDrainRate) < 0.001 ? "" : $" HP{_beatmap.Difficulty.HPDrainRate:0.##}";
-                    case "BPM":
-                        return Math.Abs(speedRate - 1) < 0.001 ? "" : $" ({Convert.ToInt32(_originalBeatmap.General.MainBPM)}bpm)";
                     default:
                         return $"{{{m.Groups[1].Value}}}";
                 }
             }).Trim();
-        }
-
-        public void ModifyDifficulty(float? cs = null, float? ar = null, float? od = null, float? hp = null,
-            float? minCS = null, float? maxCS = null, float? minAR = null, float? maxAR = null, float? minOD = null, float? maxOD = null)
-        {
-            _beatmap.ModifyDifficulty(cs, ar, od, hp, minCS, maxCS, minAR, maxAR, minOD, maxOD);
         }
 
         private List<HitObject> GenerateCombo()
@@ -263,7 +242,7 @@ namespace OsuPracticeTools.Objects
                 StartTime = endTime,
                 EndTime = endTime,
                 HitSound = HitSoundType.None,
-                HitSample = new HitSample{NormalSet = SampleSet.None, AdditionSet = SampleSet.None, Index = 0, Volume = 0, Filename = "_"},
+                HitSample = new HitSample { NormalSet = SampleSet.None, AdditionSet = SampleSet.None, Index = 0, Volume = 0, Filename = "_" },
                 NewCombo = true,
                 ComboColourOffset = 0
 
@@ -454,10 +433,11 @@ namespace OsuPracticeTools.Objects
         {
             _settings = settings;
             ComboType = _settings.ComboType;
-            if (_startCombo == 0) ComboType = ComboType.None;
-            else if (_startCombo == 1) ComboType = ComboType.Spinner;
+            var combo = _settings.ComboAmount ?? _startCombo;
+            if (combo == 0) ComboType = ComboType.None;
+            else if (combo == 1) ComboType = ComboType.Spinner;
 
-            Combo = Math.Clamp(_settings.ComboAmount ?? _startCombo, (int)ComboType, 200);
+            Combo = Math.Clamp(combo, (int)ComboType, 200);
         }
 
         public void Save(string tempFolder, string beatmapFolder, bool overwrite = false)
@@ -470,7 +450,9 @@ namespace OsuPracticeTools.Objects
 
             _beatmap.HitObjects.InsertRange(0, combo);
 
-            _beatmap.Metadata.Tags.Add("pdiffmaker");
+            _beatmap.Metadata.Tags.Add(GlobalConstants.PRACTICE_DIFF_TAG);
+            _beatmap.General.Index = Index;
+            _beatmap.General.Total = Total;
             _beatmap.General.StartTime = StartTime;
 
             _beatmap.Save(tempFolder, beatmapFolder, overwrite, true);

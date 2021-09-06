@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-namespace OsuPracticeTools.Forms
+namespace OsuPracticeTools.Core.GlobalSettings
 {
     public sealed class MessageForm : Form
     {

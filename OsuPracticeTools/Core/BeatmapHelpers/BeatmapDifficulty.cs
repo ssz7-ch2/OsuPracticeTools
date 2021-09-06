@@ -1,4 +1,4 @@
-﻿namespace OsuPracticeTools.Helpers.BeatmapHelpers
+﻿namespace OsuPracticeTools.Core.BeatmapHelpers
 {
     public static class BeatmapDifficulty
     {

@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualBasic.FileIO;
 using OsuLightBeatmapParser;
 using OsuLightBeatmapParser.Enums;
+using OsuPracticeTools.Helpers;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -9,14 +10,14 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace OsuPracticeTools.Helpers.BeatmapHelpers
+namespace OsuPracticeTools.Core.BeatmapHelpers
 {
     public static class BeatmapHelper
     {
-        public static string GetOriginalBeatmap(string beatmapFile, string beatmapFolder)
+        public static string GetOriginalBeatmap(string beatmapFile, string beatmapFolder, string[] tags)
         {
             var beatmap = BeatmapDecoder.DecodeRead(beatmapFile, new[] { FileSection.Metadata });
-            if (!beatmap.Metadata.Tags.Contains("osutrainer") && !beatmap.Metadata.Tags.Contains("pdiffmaker") && !beatmap.Metadata.Tags.Contains("prTools"))
+            if (!beatmap.Metadata.Tags.Overlaps(tags))
                 return beatmapFile;
 
             foreach (var file in Directory.GetFiles(beatmapFolder, "*.osu"))
@@ -25,7 +26,7 @@ namespace OsuPracticeTools.Helpers.BeatmapHelpers
                     continue;
 
                 var originalBeatmap = BeatmapDecoder.DecodeRead(file, new[] { FileSection.Metadata });
-                if (!originalBeatmap.Metadata.Tags.Contains("osutrainer") && !originalBeatmap.Metadata.Tags.Contains("pdiffmaker") && !originalBeatmap.Metadata.Tags.Contains("prTools") && beatmap.Metadata.BeatmapID == originalBeatmap.Metadata.BeatmapID)
+                if (!originalBeatmap.Metadata.Tags.Overlaps(tags) && beatmap.Metadata.BeatmapID == originalBeatmap.Metadata.BeatmapID)
                 {
                     if (beatmap.Metadata.BeatmapID != 0 || beatmap.Metadata.Version.Contains(originalBeatmap.Metadata.Version))
                         return file;
