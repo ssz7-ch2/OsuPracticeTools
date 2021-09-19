@@ -19,5 +19,6 @@ namespace OsuPracticeTools.Core.PracticeDiffs
         public IntervalType IntervalType { get; set; } = IntervalType.HitObjects;
         public string BookmarksDiffLoad { get; set; } = null;
         public string BookmarksDiffSave { get; set; } = null;
+        public bool BookmarksAdd { get; set; } = false;
     }
 }

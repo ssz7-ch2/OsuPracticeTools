@@ -16,16 +16,19 @@ namespace OsuPracticeTools.Core.BeatmapHelpers
     internal static class BeatmapExtensions
     {
         // check if file exists in beatmap folder, then save to temp folder
-        public static void Save(this Beatmap beatmap, string tempFolder, string beatmapFolder, bool overwrite, bool rename = false)
+        public static void Save(this Beatmap beatmap, string tempFolder, string beatmapFolder, bool overwrite, bool rename = false, string match = null)
         {
             var path = Path.Combine(beatmapFolder, beatmap.FileName);
             try
             {
-                if (!File.Exists(path) || overwrite)
+                if ((!File.Exists(path) || overwrite) && match is null)
                     beatmap.Save(tempFolder);
                 else if (rename)
                 {
-                    beatmap.Rename(beatmapFolder);
+                    if (match is null)
+                        beatmap.Rename(beatmapFolder);
+                    else
+                        beatmap.Rename(beatmapFolder, match);
                     beatmap.Save(tempFolder);
                 }
             }
@@ -34,18 +37,32 @@ namespace OsuPracticeTools.Core.BeatmapHelpers
             }
         }
 
+        public static void Rename(this Beatmap beatmap, string folder, string match, int startIndex = 1)
+        {
+            var originalVersion = beatmap.Metadata.Version;
+            beatmap.Metadata.Version = originalVersion.Replace(match, startIndex.ToString());
+
+            while (File.Exists(Path.Combine(folder, beatmap.FileName)))
+            {
+                startIndex++;
+                beatmap.Metadata.Version = originalVersion.Replace(match, startIndex.ToString());
+            }
+        }
+
         public static void Rename(this Beatmap beatmap, string folder)
         {
             var regex = new Regex(@" v([0-9]+)$");
-            while (File.Exists(Path.Combine(folder, beatmap.FileName)))
-            {
-                var match = regex.Match(beatmap.Metadata.Version);
+            var match = regex.Match(beatmap.Metadata.Version);
 
-                if (match.Success)
-                    beatmap.Metadata.Version = beatmap.Metadata.Version.Replace(match.Value, $" v{Convert.ToInt32(match.Groups[1].Value) + 1}");
-                else
-                    beatmap.Metadata.Version += " v2";
+            if (!match.Success && File.Exists(Path.Combine(folder, beatmap.FileName)))
+            { 
+                beatmap.Metadata.Version += " v2";
+                match = regex.Match(beatmap.Metadata.Version);
             }
+
+            while (File.Exists(Path.Combine(folder, beatmap.FileName)))
+                beatmap.Metadata.Version = beatmap.Metadata.Version.Replace(match.Value, $" v{Convert.ToInt32(match.Groups[1].Value) + 1}");
+            
         }
 
         public static void FormatName(this Beatmap beatmap, Beatmap originalBeatmap, ScriptSettings settings, string format = "{v}{R}{BPM}{CS}{AR}{OD}{HP}")

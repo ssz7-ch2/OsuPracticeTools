@@ -62,7 +62,7 @@ namespace OsuPracticeTools.Core.Scripts.PracticeDiffScripts
                         break;
                     case "b":
                         DiffSettings.PracticeDiffsType = PracticeDiffsType.Bookmarks;
-                        var nameMatch = new Regex(@"-b +'(.+)'").Match(settingsString.Replace('"', '\''));
+                        var nameMatch = new Regex(@"-b +'([^']+)'").Match(settingsString.Replace('"', '\''));
                         if (nameMatch.Success)
                             DiffSettings.BookmarksDiffLoad = nameMatch.Groups[1].Value;
                         break;
@@ -94,7 +94,7 @@ namespace OsuPracticeTools.Core.Scripts.PracticeDiffScripts
                         DiffSettings.GapDuration = string.IsNullOrEmpty(param) ? 1500 : int.Parse(param);
                         break;
                     case "save":
-                        nameMatch = new Regex(@"-save +'(.+)'").Match(settingsString.Replace('"', '\''));
+                        nameMatch = new Regex(@"-save +'([^']+)'").Match(settingsString.Replace('"', '\''));
                         if (nameMatch.Success)
                             DiffSettings.BookmarksDiffSave = nameMatch.Groups[1].Value;
                         break;
@@ -194,7 +194,7 @@ namespace OsuPracticeTools.Core.Scripts.PracticeDiffScripts
 
             if (!string.IsNullOrEmpty(DiffSettings.BookmarksDiffSave))
                 PracticeDiffExtensions.CreateBookmarksDiffFromTimes(
-                    diffs.ConvertAll(p => p.StartTime).ToArray(), Info.ParsedBeatmap, GlobalConstants.BEATMAP_TEMP, DiffSettings.BookmarksDiffSave);
+                    diffs.ConvertAll(p => p.StartTime).ToArray(), Info.ParsedBeatmap, GlobalConstants.BEATMAP_TEMP, DiffSettings.BookmarksDiffSave, DiffSettings.BookmarksAdd);
 
             return typeof(CreateDiffsScript);
         }

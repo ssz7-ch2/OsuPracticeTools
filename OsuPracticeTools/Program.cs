@@ -239,8 +239,10 @@ namespace OsuPracticeTools
                     typeof(UpdateDiffScript), typeof(UpdateDiffEndScript)
                 };
 
-                await Task.Factory.StartNew(() => {
-                    Parallel.ForEach(KeyScriptDictionary[multiKey], script =>
+                // special case that requires sequential execution
+                if (KeyScriptDictionary[multiKey].OfType<AddDiffScript>().Any() && KeyScriptDictionary[multiKey].OfType<CreateDiffsScript>().Any())
+                {
+                    foreach (var script in KeyScriptDictionary[multiKey])
                     {
                         var result = script.Run();
 
@@ -252,8 +254,26 @@ namespace OsuPracticeTools
 
                         if (playFinishTypes.Contains(result))
                             playFinish = true;
+                    }
+                }
+                else
+                {
+                    await Task.Factory.StartNew(() => {
+                        Parallel.ForEach(KeyScriptDictionary[multiKey], script =>
+                        {
+                            var result = script.Run();
+
+                            if (result is null)
+                            {
+                                messages.Add($"Failed to run script {script.ScriptString}");
+                                playError = true;
+                            }
+
+                            if (playFinishTypes.Contains(result))
+                                playFinish = true;
+                        });
                     });
-                });
+                }
 
                 Logger.LogMessage(string.Join('\n', messages));
 

@@ -73,7 +73,7 @@ namespace OsuPracticeTools.Core.PracticeDiffs
             return beatmap.Editor.Bookmarks.Select(b => new[] { b, -1 }).ToList();
         }
 
-        public static Beatmap GetBookmarksDiff(string beatmapVersion, string beatmapFolder, out string path)
+        public static Beatmap GetBookmarksDiff(Beatmap originalBeatmap, string beatmapFolder, out string path)
         {
             path = null;
             var maxSimilarity = int.MinValue;
@@ -82,8 +82,8 @@ namespace OsuPracticeTools.Core.PracticeDiffs
                 var beatmap = BeatmapDecoder.DecodeRead(file, new[] { FileSection.Metadata });
                 if (beatmap.Metadata.Tags.Contains(GlobalConstants.BOOKMARKS_TAG))
                 {
-                    var similarity = beatmap.Metadata.Version.Similarity(beatmapVersion);
-                    if (similarity > maxSimilarity)
+                    var similarity = beatmap.Metadata.Version.Similarity(originalBeatmap.Metadata.Version);
+                    if (similarity > maxSimilarity && beatmap.Metadata.BeatmapID == originalBeatmap.Metadata.BeatmapID)
                     {
                         path = file;
                         maxSimilarity = similarity;
@@ -97,11 +97,15 @@ namespace OsuPracticeTools.Core.PracticeDiffs
             return null;
         }
 
-        public static void CreateBookmarksDiffFromTimes(int[] times, Beatmap beatmap, string tempFolder, string bookmarksDiffName)
+        public static void CreateBookmarksDiffFromTimes(int[] times, Beatmap beatmap, string tempFolder, string bookmarksDiffName, bool bookmarksAdd)
         {
             var bookmarksDiff = beatmap.Clone(new[] { FileSection.Editor, FileSection.Metadata });
 
-            bookmarksDiff.Editor.Bookmarks = times;
+            if (bookmarksAdd)
+                bookmarksDiff.Editor.Bookmarks = GetBookmarksDiff(beatmap, Info.BeatmapFolder, out _)?.Editor.Bookmarks.Concat(times).ToArray() ?? times;
+            else
+                bookmarksDiff.Editor.Bookmarks = times;
+
             bookmarksDiff.Metadata.Version += $" {bookmarksDiffName}";
             bookmarksDiff.Metadata.Tags.Add(GlobalConstants.BOOKMARKS_TAG);
             bookmarksDiff.Save(tempFolder);

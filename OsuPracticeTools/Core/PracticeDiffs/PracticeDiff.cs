@@ -22,6 +22,7 @@ namespace OsuPracticeTools.Core.PracticeDiffs
         private int _startCombo;
         private int _endCombo;
         private int _endTime;
+        private string _renameMatch;
 
         public string Name
         {
@@ -73,6 +74,7 @@ namespace OsuPracticeTools.Core.PracticeDiffs
 
             _beatmap.General = _beatmap.CloneGeneralSection();
             _beatmap.General.Countdown = CountdownType.None;
+            _beatmap.Editor = _beatmap.CloneEditorSection();
             _beatmap.Events = _beatmap.CloneEventsSection();
             _beatmap.TimingPoints = _beatmap.CloneTimingPointsSection();
 
@@ -104,6 +106,10 @@ namespace OsuPracticeTools.Core.PracticeDiffs
                         return _startCombo.ToString();
                     case "ec":
                         return _endCombo.ToString();
+                    case "ai":
+                        _renameMatch = m.Value;
+                        _settings.BookmarksAdd = true;
+                        return $"{{{m.Groups[1].Value}}}";
                     default:
                         return $"{{{m.Groups[1].Value}}}";
                 }
@@ -418,16 +424,12 @@ namespace OsuPracticeTools.Core.PracticeDiffs
             }
         }
 
-        private void RemoveHitObjects()
-        {
-            _beatmap.HitObjects.RemoveAll(h => h.StartTime < StartTime || h.EndTime > EndTime);
-        }
+        private void RemoveHitObjects() => _beatmap.HitObjects.RemoveAll(h => h.StartTime < StartTime || h.EndTime > EndTime);
 
-        private void RemoveBreaks()
-        {
-            _beatmap.Events.Breaks.RemoveAll(b =>
-                b.StartTime <= StartTime || b.EndTime >= EndTime);
-        }
+        private void RemoveBreaks() => _beatmap.Events.Breaks.RemoveAll(b =>
+                                         b.StartTime <= StartTime || b.EndTime >= EndTime);
+
+        private void AdjustBookmarks() => _beatmap.Editor.Bookmarks = new[] { StartTime };
 
         public void ApplySettings(PracticeDiffSettings settings)
         {
@@ -447,6 +449,7 @@ namespace OsuPracticeTools.Core.PracticeDiffs
             var combo = GenerateCombo();
             RemoveHitObjects();
             RemoveBreaks();
+            AdjustBookmarks();
 
             _beatmap.HitObjects.InsertRange(0, combo);
 
@@ -455,7 +458,8 @@ namespace OsuPracticeTools.Core.PracticeDiffs
             _beatmap.General.Total = Total;
             _beatmap.General.StartTime = StartTime;
 
-            _beatmap.Save(tempFolder, beatmapFolder, overwrite, true);
+
+            _beatmap.Save(tempFolder, beatmapFolder, overwrite, true, _renameMatch);
         }
     }
 }

@@ -22,6 +22,7 @@ s + A: adddiff
 s + Q: enddiff
 s + U: updatediff
 s + Y: updatediffend
+c + s + A: adddiff | creatediffs -spinner -f "{v} {ai}" -save "(Split)" | cleardiffs
 s + S: creatediffs -spinner -save "(Split)"
 s + B: creatediffs -b "(Split)" -spinner -overwrite
 s + W: creatediffs -f "{v} {sc}-{ec}x"

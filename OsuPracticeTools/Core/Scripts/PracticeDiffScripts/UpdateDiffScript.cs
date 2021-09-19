@@ -45,7 +45,7 @@ namespace OsuPracticeTools.Core.Scripts.PracticeDiffScripts
                 },
                 modifiedBeatmap, Info.BeatmapFolder, Info.BeatmapFolder, true).First();
 
-            var bookmarksDiff = PracticeDiffExtensions.GetBookmarksDiff(Info.ParsedBeatmap.Metadata.Version, Info.BeatmapFolder, out var bookmarksPath);
+            var bookmarksDiff = PracticeDiffExtensions.GetBookmarksDiff(Info.ParsedBeatmap, Info.BeatmapFolder, out var bookmarksPath);
             if (bookmarksDiff != null)
             {
                 var index = Array.FindIndex(bookmarksDiff.Editor.Bookmarks, b => b == Info.ParsedBeatmap.General.StartTime);

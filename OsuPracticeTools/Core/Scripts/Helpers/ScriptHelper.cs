@@ -94,14 +94,14 @@ namespace OsuPracticeTools.Core.Scripts.Helpers
                     break;
                 case "f":
                     // too hard to get name format in same regex
-                    var formatMatch = new Regex(@"-f +'(.+)'.+").Match(settingsString.Replace('"', '\''));
+                    var formatMatch = new Regex(@"-f +'([^']+)'").Match(settingsString.Replace('"', '\''));
                     if (formatMatch.Success)
                     {
                         settings.NameFormat = formatMatch.Groups[1].Value;
                     }
                     break;
                 case "fauto":
-                    formatMatch = new Regex(@"-fauto +'(.+)'.+").Match(settingsString.Replace('"', '\''));
+                    formatMatch = new Regex(@"-fauto +'([^']+)'").Match(settingsString.Replace('"', '\''));
                     if (formatMatch.Success)
                     {
                         settings.NameFormat = "{v}{HR}{FLIP}{R}{BPM}{CS}{AR}{OD}{HP}{RS}" + " " + formatMatch.Groups[1].Value;
